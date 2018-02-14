@@ -68,9 +68,19 @@ def colormapLegend():
     scalarmappaple.set_array(5)
     plt.colorbar(scalarmappaple)
 
-def saveFig(fig, ax, numOfFigures):
+def saveFig(fig, ax, numOfFigures, format):
     theta = np.linspace(0, 2*np.pi, numOfFigures)
-    for i in range(0, numOfFigures, 1):
-         ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
-         fig.savefig("movie%d.png" % (i), format='png', dpi=500, bbox_inches = 'tight')
-         print("Figure %2d has been saved." % (i))
+    if format == "png":
+        for i in range(0, numOfFigures, 1):
+             ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
+             fig.savefig("fig%d.png" % (i), format='png', dpi=500, bbox_inches = 'tight')
+             print("Figure %2d has been saved." % (i))
+
+    elif format == "pdf":
+        for i in range(0, numOfFigures, 1):
+             ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
+             fig.savefig("fig%d.pdf" % (i), format='pdf', dpi=500, bbox_inches = 'tight')
+             print("Figure %2d has been saved." % (i))
+
+    else:
+        print("Format is not supported.")
