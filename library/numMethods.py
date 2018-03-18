@@ -180,9 +180,7 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
     # stores the initial condition and T/2 in output vector
     outData = np.array([x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5], tau_n, counter])
     # prints status updates
-    print("        Initial state has been adapted for %2d times:" % (counter))
-    print("        -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
-    print("        Constraints at T/2 = %10.8e:" % (outData[6]))
-    print("        -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (constraints[0], constraints[1], constraints[2]))
+    print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
+    print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (outData[6], constraints[0], constraints[1], constraints[2]))
 
     return outData

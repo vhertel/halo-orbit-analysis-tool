@@ -270,8 +270,6 @@ def halfPeriod(x0, t0, mu, epsilon):
         counter = counter + 1
 
     tHalfPeriod = timeStep
-#    print("        Step size has been reduced for %2d times:" % (counter))
-    print("        -> y = %6.5e at T/2 = %0.5f" % (xHalfPeriod[1], tHalfPeriod))
 
     return tHalfPeriod
 
@@ -321,8 +319,8 @@ def stability(eigenvalues, boundary):
     stabilityIndex = 1/2 * (maximum + 1/maximum)
 
     if stabilityIndex < boundary:
-        print("        Stability Index: %8.2f    ->    NRHO: Yes\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f                         -> NRHO: Yes\n" % (stabilityIndex))
         return True
     else:
-        print("        Stability Index: %8.2f    ->    NRHO: No\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f                         -> NRHO: No\n" % (stabilityIndex))
         return False
