@@ -2,7 +2,7 @@
 """
 File    : calculation.py
 Author  : Victor Hertel
-Date    : 08.02.2018
+Date    : 16.03.2018
 
 Calculates individual orbits or families of halo orbits.
 """
@@ -51,24 +51,26 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     outTime = outData[6]
 
     # calculates monodromy matrix
-    #monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
+    monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
     # calculates eigenvalues of monodromy matrix
-    #eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-    #print(eigenvalues)
-    #stability = haloCalculation.stability(eigenvalues)
-    #print(stability)
+    eigenvalues, eigenvectors = np.linalg.eig(monodromy)
+    stability = haloCalculation.stability(eigenvalues, 1.2)
 
     # calculates Jacobi constant
     J = haloCalculation.jacobiConst(outX, mu)
+
+    # defines colormap in range of Jacobi constant
+    norm = (J - 2.7) / (3.2 - 2.7)  #!!! Hard coded
+    if stability == True:
+        color = 'green'
+    else:
+        color = plt.cm.jet(norm)
 
     # plots halo orbit
     halo = numMethods.rk4System(outX, t0, 2*outTime, mu)
     x = halo[:, 0]
     y = halo[:, 1]
     z = halo[:, 2]
-    # defines colormap in range of Jacobi constant
-    norm = (J - 3.02) / (3.2 - 3.02)                                #!!! Hard coded
-    color = plt.cm.jet(norm)
     if haloFamily == "northern" :
         ax.plot(x, y, -z, color=color, linewidth=1)
     elif haloFamily == "southern" :
@@ -95,6 +97,8 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
 #                   the halo shape, either the x- or z-value is incremented by a specific stepsize,
 #                   that is calculated for each orbit based on the last two solutions for reaching
 #                   a uniformed plot with constant distances between the orbits.
+#
+#                   The distance between the orbits (familyStep) has been successfully tested for the range of 0.005 - 0.0075
 #
 # OUTPUT:           No output is generated. The orbits are plotted in the
 #                   figure that has been created before the function call
@@ -167,17 +171,31 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             outX = outData[0:6]
             outTime = outData[6]
 
-        if outData[7] > 35:
+        if outData[7] > 15:
             break
 
+        # calculates monodromy matrix
+        monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
+        # calculates eigenvalues of monodromy matrix
+        eigenvalues, eigenvectors = np.linalg.eig(monodromy)
+        stability = haloCalculation.stability(eigenvalues, 1.2)
+
+        # calculates Jacobi constant
         J = haloCalculation.jacobiConst(outX, mu)
+
+        # defines colormap in range of Jacobi constant
+        norm = (J - 2.7) / (3.2 - 2.7)  #!!! Hard coded
+        if stability == True:
+            color = 'green'
+        else:
+            color = 'blue'
+            #color = plt.cm.jet(norm)
+
+        # plots halo orbit
         halo = numMethods.rk4System(outX, t0, 2*outTime, mu)
         x = halo[:, 0]
         y = halo[:, 1]
         z = halo[:, 2]
-        # defines colormap in range of Jacobi constant
-        norm = (J - 2.9) / (3.2 - 2.9)                                #!!! Hard coded
-        color = plt.cm.jet(norm)
         if haloFamily == "northern" :
             ax.plot(x, y, -z, color=color, linewidth=1)
         elif haloFamily == "southern" :
@@ -186,7 +204,7 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             ax.plot(x, y, z, color=color, linewidth=1)
             ax.plot(x, y, -z, color=color, linewidth=1)
         else:
-            print("Input of halo family is not supported.")
+            print("Input of haloFamily is not supported.")
             exit()
     print("DONE")
 
@@ -268,17 +286,28 @@ def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, h
         outX = x_n
         outTime = tau_n
 
+        # calculates monodromy matrix
+        monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
+        # calculates eigenvalues of monodromy matrix
+        eigenvalues, eigenvectors = np.linalg.eig(monodromy)
+        stability = haloCalculation.stability(eigenvalues, 1.2)
+
         # calculates Jacobi constant
         J = haloCalculation.jacobiConst(outX, mu)
+
+        # defines colormap in range of Jacobi constant
+        norm = (J - 2.7) / (3.2 - 2.7)  #!!! Hard coded
+        if stability == True:
+            color = 'green'
+        else:
+            color = 'blue'
+            #color = plt.cm.jet(norm)
 
         # plots halo orbit
         halo = numMethods.rk4System(outX, t0, 2*outTime, mu)
         x = halo[:, 0]
         y = halo[:, 1]
         z = halo[:, 2]
-        # defines colormap in range of Jacobi constant
-        norm = (J - 3.02) / (3.2 - 3.02)                                #!!! Hard coded
-        color = plt.cm.jet(norm)
         if haloFamily == "northern" :
             ax.plot(x, y, -z, color=color, linewidth=1)
         elif haloFamily == "southern" :

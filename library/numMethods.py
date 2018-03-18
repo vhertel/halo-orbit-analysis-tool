@@ -2,7 +2,7 @@
 """
 File    : numMethods.py
 Author  : Victor Hertel
-Date    : 08.02.2018
+Date    : 16.03.2018
 
 Numerical methods for solving differential equations.
 """
@@ -105,7 +105,7 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
 
         # constraints are corrected until they meet a defined margin of error
         while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-            if counter >= 35:
+            if counter > 15:
                 print("Differential Corrections Method could not find a solution.")
                 break
             else:
@@ -142,7 +142,7 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
 
         # constraints are corrected until they meet a defined margin of error
         while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-            if counter > 35:
+            if counter > 15:
                 print("Differential Corrections Method could not find a solution.")
                 break
             else:
@@ -180,6 +180,6 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
     print("\n        Initial state has been adapted for %2d times:" % (counter))
     print("        -> x0 = [%10.8e, %10.8e, %10.8e, %10.8e, %10.8e, %10.8e]" % (outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
     print("        Constraints at T/2 = %10.8e:" % (outData[6]))
-    print("        -> [y, dx/dt, dz/dt] = [%10.8e, %10.8e, %10.8e]\n" % (constraints[0], constraints[1], constraints[2]))
+    print("        -> [y, dx/dt, dz/dt] = [%10.8e, %10.8e, %10.8e]" % (constraints[0], constraints[1], constraints[2]))
 
     return outData

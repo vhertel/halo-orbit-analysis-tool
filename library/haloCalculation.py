@@ -2,7 +2,7 @@
 """
 File    : haloCalculation.py
 Author  : Victor Hertel
-Date    : 08.02.2018
+Date    : 16.03.2018
 
 A library of specific functions necessary to find periodic solutions
 to the Circular Restricted Three Body Problem (CR3BP).
@@ -233,7 +233,7 @@ def halfPeriod(x0, t0, mu, epsilon):
         xHalfPeriod = - np.ones(6)
     # step size
     stepSize = 0.5
-    timeStep = t0 + stepSize
+    timeStep = t0
     # number of steps for numerical integration
     n = 2000
     # counter for step size reductions
@@ -299,42 +299,28 @@ def jacobiConst(x, mu):
 
 
 
-# NOT FINISHED YET
-def stability(eigenvalues):
+#--------------------------------------------------------------------------
+# STABILITY INDEX
+#
+# DESCRIPTION:      Calculates the stability index depending on the maximum
+#                   eigenvalue of the monodromy matrix.
+#
+# OUTPUT:           Boolean if orbit is stable or not
+#
+# SYNTAX:           stability(eigenvalues)
+# eigenvalues   =   Vector including the eigenvalues of the monodromy matrix
+#--------------------------------------------------------------------------
 
-    # array for reciprocal pairs of eigenvalues
-    reciprocal = np.zeros((2,2), dtype=np.complex)
-    # array for trivial pair of eigenvalues
-    trivial = np.zeros((1,2), dtype=np.complex)
-    # array for complex stability indices
-    complexStabilityIndices = np.zeros((1,2), dtype=np.complex)
-    # array for stability indices in modulus
-    stabilityIndices = np.zeros(2)
-    # counter for reciprocal array
-    counter = 0
-    # loops through eigenvalues and compares each possible pair one single time
-    for i in range(6):
-        for j in range(5-i):
-            # checks if acutal pair if eigenvalues is reciprocal
-            if eigenvalues[i].round(3) == (1/eigenvalues[5-j]).round(3):
-                # sorts out trivial pair of eigenvalues and stores them
-                if  0.99 <= np.sqrt(eigenvalues[i].real**2 + eigenvalues[i].imag**2)  <= 1.01:
-                    trivial[0, 0] = eigenvalues[i]
-                    trivial[0, 1] = eigenvalues[5-j]
-                # sorts out reciprocal pair of eigenvalues and stores them
-                else:
-                    reciprocal[counter, 0] = eigenvalues[i]
-                    reciprocal[counter, 1] = eigenvalues[5-j]
-                    counter = counter + 1
-    print(reciprocal)
-    # calculates stability indices
-    for i in range(2):
-        complexStabilityIndices[0, i] = 1/2 * (reciprocal[i, 0] + 1/reciprocal[i, 1])
-        stabilityIndices[i] = np.sqrt(complexStabilityIndices[0, i].real**2 + complexStabilityIndices[0, i].imag**2)
-    print(complexStabilityIndices)
-    print(stabilityIndices)
+def stability(eigenvalues, boundary):
 
-    if stabilityIndices[0] <= 1 and stabilityIndices[1] <= 1:
+    maximum = max(abs(eigenvalues))
+    stabilityIndex = 1/2 * (maximum + 1/maximum)
+
+    if stabilityIndex < boundary:
+        print("        NRHO:            Yes\n"
+              "        Stability Index: %8.2f\n" % (stabilityIndex))
         return True
     else:
+        print("        NRHO:            No\n"
+              "        Stability Index: %8.2f\n" % (stabilityIndex))
         return False
