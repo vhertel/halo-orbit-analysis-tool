@@ -44,7 +44,12 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     # prints status update
     print("STATUS: Single Halo Orbit Computation...")
     # stores initial state and half period of halo orbit in 1x7 vector outData
-    outData = numMethods.diffCorrections(x0, t0, mu, epsilon, fixedValue)
+    try:
+        outData = numMethods.diffCorrections(x0, t0, mu, epsilon, fixedValue)
+    except ValueError:
+        print("        No Orbit has been found.\n"
+              "DONE")
+        return
     # stores initial state
     outX = outData[0:6]
     # stores half period
@@ -54,7 +59,7 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
     # calculates eigenvalues of monodromy matrix
     eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-    stability = haloCalculation.stability(eigenvalues, 1.2)
+    stability = haloCalculation.stability(eigenvalues, 1.5)
 
     # calculates Jacobi constant
     J = haloCalculation.jacobiConst(outX, mu)
@@ -119,7 +124,7 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
 #--------------------------------------------------------------------------
 def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloFamily, ax):
 
-    print("STATUS: Natural Parameter Continuation method for generating a family of %2d orbits...\n" % (orbitNumber))
+    print("STATUS: Natural Parameter Continuation method for generating a family of %2d orbits around %s ...\n" % (orbitNumber, lagrangian))
     # sets the iteratively adjusted initial condition
     x_n = x0
     lastX = x_n
@@ -145,7 +150,12 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             # saves last initial state for comparison of next iteration
             lastX = outX
             # calculates initial state
-            outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "x")
+            try:
+                outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "x")
+            except ValueError:
+                print("        No more Orbit has been found.\n"
+                      "DONE")
+                return
             outX = outData[0:6]
             outTime = outData[6]
 
@@ -167,18 +177,20 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             # saves last initial state for comparison of next iteration
             lastX = outX
             # calculates initial state
-            outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "z")
+            try:
+                outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "z")
+            except ValueError:
+                print("        No more Orbit has been found.\n"
+                      "DONE")
+                return
             outX = outData[0:6]
             outTime = outData[6]
-
-        if outData[7] > 15:
-            break
 
         # calculates monodromy matrix
         monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
         # calculates eigenvalues of monodromy matrix
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-        stability = haloCalculation.stability(eigenvalues, 1.2)
+        stability = haloCalculation.stability(eigenvalues, 1.5)
 
         # calculates Jacobi constant
         J = haloCalculation.jacobiConst(outX, mu)

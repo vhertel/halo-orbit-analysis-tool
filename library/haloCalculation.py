@@ -223,7 +223,7 @@ def stm(x, t0, tf, mu):
 #--------------------------------------------------------------------------
 
 def halfPeriod(x0, t0, mu, epsilon):
-    print("        Calculation of T/2...")
+#    print("        Calculation of T/2...")
     # declares and initializes actual state x and state at half period xHalfPeriod
     if x0[4] >= 0:
         x = np.ones(6)
@@ -243,6 +243,8 @@ def halfPeriod(x0, t0, mu, epsilon):
 
         if x0[4] >= 0:
             while x[1] > 0:
+                if timeStep > 5:
+                    raise ValueError
                 xHalfPeriod = x
                 timeStep = timeStep + stepSize
                 Y = numMethods.rk4System(x0, t0, timeStep, mu)
@@ -250,6 +252,8 @@ def halfPeriod(x0, t0, mu, epsilon):
                 #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
         else:
             while x[1] < 0:
+                if timeStep > 5:
+                    raise ValueError
                 xHalfPeriod = x
                 timeStep = timeStep + stepSize
                 Y = numMethods.rk4System(x0, t0, timeStep, mu)
@@ -266,8 +270,8 @@ def halfPeriod(x0, t0, mu, epsilon):
         counter = counter + 1
 
     tHalfPeriod = timeStep
-    print("        Step size has been reduced for %2d times:" % (counter))
-    print("        -> y = %10.8e at T/2 = %10.8e\n" % (xHalfPeriod[1], tHalfPeriod))
+#    print("        Step size has been reduced for %2d times:" % (counter))
+    print("        -> y = %6.5e at T/2 = %0.5f" % (xHalfPeriod[1], tHalfPeriod))
 
     return tHalfPeriod
 
@@ -317,10 +321,8 @@ def stability(eigenvalues, boundary):
     stabilityIndex = 1/2 * (maximum + 1/maximum)
 
     if stabilityIndex < boundary:
-        print("        NRHO:            Yes\n"
-              "        Stability Index: %8.2f\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f    ->    NRHO: Yes\n" % (stabilityIndex))
         return True
     else:
-        print("        NRHO:            No\n"
-              "        Stability Index: %8.2f\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f    ->    NRHO: No\n" % (stabilityIndex))
         return False
