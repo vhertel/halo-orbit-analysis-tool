@@ -58,7 +58,7 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
     # calculates eigenvalues of monodromy matrix
     eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-    stability = haloCalculation.stability(eigenvalues, 1.5)
+    stability = haloCalculation.stability(eigenvalues, 2.0)
 
     # calculates Jacobi constant
     J = haloCalculation.jacobiConst(outX, mu)
@@ -124,10 +124,10 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
 def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloFamily, ax):
 
     if orbitNumber == "all":
-        print("STATUS: Natural Parameter Continuation method for generating the whole family of halo orbits around %s ...\n\n" % (lagrangian))
-        orbitNumber = 100000000000
+        print("STATUS: Natural Parameter Continuation Method for generating the whole family of halo orbits around %s ...\n\n" % (lagrangian))
+        orbitNumber = 1000000000000000000
     else:
-        print("STATUS: Natural Parameter Continuation method for generating a family of %2d halo orbits around %s ...\n\n" % (orbitNumber, lagrangian))
+        print("STATUS: Natural Parameter Continuation Method for generating a family of %2d halo orbits around %s ...\n\n" % (orbitNumber, lagrangian))
     # sets the iteratively adjusted initial condition
     x_n = x0
     lastX = x_n
@@ -192,7 +192,7 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
         monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
         # calculates eigenvalues of monodromy matrix
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-        stability = haloCalculation.stability(eigenvalues, 1.5)
+        stability = haloCalculation.stability(eigenvalues, 2.0)
 
         # calculates Jacobi constant
         J = haloCalculation.jacobiConst(outX, mu)
@@ -242,30 +242,45 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
 # epsilon       =   Error Tolerance of Constraints at T/2
 # orbitNumber   =   Number of Orbits to search for
 # familyStep    =   Stepsize in x- or z-Direction
-# direction     =   Direction of continuation
-#                   Input possibilities: {"planar", "vertical"}
 # haloFamily    =   Desired family of Halo Orbits:
 #                   Input possibilities: {"northern", "southern", "both"}
 # ax            =   Allows access to the figure
 #--------------------------------------------------------------------------
-def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, haloFamily, ax):
+def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, haloFamily, ax):
 
-    print("STATUS: Pseudo Arc-Length Continuation method for generating a family of %2d orbits...\n" % (orbitNumber))
+    if orbitNumber == "all":
+        print("STATUS: Pseudo Arc-Length Continuation Method for generating the whole family of halo orbits ...\n\n")
+        orbitNumber = 1000000000000000000
+    else:
+        print("STATUS: Pseudo Arc-Length Continuation Method for generating a family of %2d halo orbits ...\n\n" % (orbitNumber))
     # sets the iteratively adjusted initial condition
     x_n = x0
     # calculates T/2 by integrating until y changes sign
-    tau_n = haloCalculation.halfPeriod(x_n, t0, mu, 1.0e-11)
+    try:
+        tau_n = haloCalculation.halfPeriod(x_n, t0, mu, 1.0e-11)
+    except ValueError:
+        return
     # declares and initializes constraint vector
     constraints = np.ones((3,1))
     # calculation of halo orbits
     for i in range(orbitNumber):
         # prints status update
-        print("        Orbit Number: %2d" % (i + 1))
-        print("        Differential corrections...")
+        print("        Orbit Number: %2d\n" % (i + 1))
+        print("        Differential Corrections Method for adaption of the initial state...")
         # declares and initializes counter for counting updates of initial state
         counter = 1
         # constraints are corrected until they meet a defined margin of error
         while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon or abs(constraints[2]) > epsilon:
+            if counter > 15:
+                print("        Differential Corrections Method did not converge.\n\n"
+                      "DONE")
+                return
+            elif abs(x_n[2]) == 0:
+                print("        No more Orbit has been found.\n\n"
+                      "DONE")
+                return
+            else:
+                counter = counter + 1
             # calculates the state transition matrix
             phi = haloCalculation.stm(x_n, t0, tau_n, mu)
             # integrates initial state from t0 to tau_n
@@ -292,10 +307,8 @@ def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, h
             tau_n = xIter[3,0]
             counter = counter + 1
         # prints status update
-        print("        Initial state has been adapted for %2d times:" % (counter))
-        print("        -> x0 = [%10.8e, %2d, %10.8e, %2d, %10.8e, %2d]" % (x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
-        print("        Constraints at T/2 = %10.8e:" % (tau_n))
-        print("        -> [y, dx/dt, dz/dt] = [%10.8e, %10.8e, %10.8e]\n" % (constraints[0], constraints[1], constraints[2]))
+        print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (counter, x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
+        print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (tau_n, constraints[0], constraints[1], constraints[2]))
         outX = x_n
         outTime = tau_n
 
@@ -303,7 +316,7 @@ def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, h
         monodromy = haloCalculation.stm(outX, t0, 2*outTime, mu)
         # calculates eigenvalues of monodromy matrix
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-        stability = haloCalculation.stability(eigenvalues, 1.2)
+        stability = haloCalculation.stability(eigenvalues, 2.0)
 
         # calculates Jacobi constant
         J = haloCalculation.jacobiConst(outX, mu)
@@ -313,8 +326,7 @@ def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, h
         if stability == True:
             color = 'green'
         else:
-            color = 'blue'
-            #color = plt.cm.jet(norm)
+            color = plt.cm.jet(norm)
 
         # plots halo orbit
         halo = numMethods.rk4System(outX, t0, 2*outTime, mu)
@@ -340,19 +352,11 @@ def pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, h
                                   [x_n[4]],
                                   [tau_n]])
         # declares and initializes the augmented constraints vector
-        if direction == "planar":
-            contiConstraints = np.array([[xRef[2000,1]],
-                                         [xRef[2000,3]],
-                                         [xRef[2000,5]],
-                                         [((contiFreeVariables - freeVariables).T).dot(nullSpace) - familyStep]])
-        elif direction == "vertical":
-            contiConstraints = np.array([[xRef[2000,1]],
-                                         [xRef[2000,3]],
-                                         [xRef[2000,5]],
-                                         [((contiFreeVariables - freeVariables).T).dot(nullSpace) + familyStep]])
-        else:
-            print("Input of continuation direction is not supported.")
-            exit()        # calculates corrections to the initial state to meet a defined margin of error
+        contiConstraints = np.array([[xRef[2000,1]],
+                                     [xRef[2000,3]],
+                                     [xRef[2000,5]],
+                                     [((contiFreeVariables - freeVariables).T).dot(nullSpace) + familyStep]])
+        # calculates corrections to the initial state to meet a defined margin of error
         GF = np.array([[phi[1,0], phi[1,2], phi[1,4], xdot[1]],
                        [phi[3,0], phi[3,2], phi[3,4], xdot[3]],
                        [phi[5,0], phi[5,2], phi[5,4], xdot[5]],
