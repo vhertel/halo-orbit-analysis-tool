@@ -17,11 +17,17 @@ from numpy.linalg import svd
 
 
 
-def plotTraj(ax):
-    #ax.legend()
-    ax.set_xlabel("x Axis")
-    ax.set_ylabel("y Axis")
-    ax.set_zlabel("z Axis")
+def plotTraj(background, ax):
+    if background == "on":
+        ax.patch.set_facecolor('black')
+        ax.set_axis_off()
+    elif background == "off":
+        #ax.legend()
+        ax.set_xlabel("x Axis")
+        ax.set_ylabel("y Axis")
+        ax.set_zlabel("z Axis")
+    else:
+        print("Input of background is not supported.")
     setAxesEqual(ax)
     plt.show()
 

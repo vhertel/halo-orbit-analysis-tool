@@ -47,7 +47,8 @@ ax = fig.gca(projection='3d')
 #--------------------------------------------------------------------------
 # PSEUDO-ARCLENGTH CONTINUATION
 # bis 0.05
-#calculation.pseudoArcLenConti(l1, t0, mu, 1.0e-6, "all", 0.05, "southern", ax)
+calculation.pseudoArcLenConti(l1, t0, mu, 1.0e-6, "all", 0.05, "southern", ax)
+calculation.pseudoArcLenConti(l2, t0, mu, 1.0e-6, "all", 0.05, "southern", ax)
 #--------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
@@ -58,4 +59,4 @@ calculation.lagrangianPoints(mu, ax)
 
 # Equals axis lengths and plots figure
 utilities.setAxesEqual(ax)
-utilities.plotTraj(ax)
+utilities.plotTraj("on", ax)
