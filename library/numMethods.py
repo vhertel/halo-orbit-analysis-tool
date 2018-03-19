@@ -2,7 +2,7 @@
 """
 File    : numMethods.py
 Author  : Victor Hertel
-Date    : 16.03.2018
+Date    : 18.03.2018
 
 Numerical methods for solving differential equations.
 """
@@ -90,14 +90,13 @@ def rk4System(y, t0, tf, mu):
 
 def diffCorrections(x0, t0, mu, epsilon, fixedValue):
 
-    print("        Differential Corrections method for adaption of the initial state...")
+    print("        Differential Corrections Method for adaption of the initial state...")
     # sets the iteratively adjusted initial condition
     x_n = x0
     # calculates T/2 by integrating until y changes sign
     try:
         tau_n = haloCalculation.halfPeriod(x_n, t0, mu, 1.0e-11)
     except ValueError:
-        print("Orbit not halo orbit")
         return
 
     # declares and initializes constraint vector
@@ -111,11 +110,10 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
         # constraints are corrected until they meet a defined margin of error
         while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
             if counter > 15:
+                print("        Differential Corrections Method did not converge.")
                 raise ValueError
             else:
                 counter = counter + 1
-            # prints status update
-#            print("        Differential corrections iteration: %2d" % (counter))
             # calculates the state transition matrix
             phi = haloCalculation.stm(x_n, t0, tau_n, mu)
             # integrates initial state from t0 to tau_n
@@ -147,11 +145,10 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
         # constraints are corrected until they meet a defined margin of error
         while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
             if counter > 15:
+                print("        Differential Corrections Method did not converge.")
                 raise ValueError
             else:
                 counter = counter + 1
-            # prints status update
-#            print("        Differential corrections iteration: %2d" % (counter))
             # calculates the state transition matrix
             phi = haloCalculation.stm(x_n, t0, tau_n, mu)
             # integrates initial state from t0 to tau_n
@@ -178,7 +175,7 @@ def diffCorrections(x0, t0, mu, epsilon, fixedValue):
             tau_n = xIter[2,0]
 
     # stores the initial condition and T/2 in output vector
-    outData = np.array([x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5], tau_n, counter])
+    outData = np.array([x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5], tau_n])
     # prints status updates
     print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
     print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (outData[6], constraints[0], constraints[1], constraints[2]))

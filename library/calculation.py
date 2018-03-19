@@ -2,7 +2,7 @@
 """
 File    : calculation.py
 Author  : Victor Hertel
-Date    : 16.03.2018
+Date    : 18.03.2018
 
 Calculates individual orbits or families of halo orbits.
 """
@@ -42,13 +42,12 @@ import math
 #--------------------------------------------------------------------------
 def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     # prints status update
-    print("STATUS: Single Halo Orbit Computation...")
+    print("STATUS: Single Halo Orbit Computation...\n\n")
     # stores initial state and half period of halo orbit in 1x7 vector outData
     try:
         outData = numMethods.diffCorrections(x0, t0, mu, epsilon, fixedValue)
     except ValueError:
-        print("        No Orbit has been found.\n"
-              "DONE")
+        print("\nDONE")
         return
     # stores initial state
     outX = outData[0:6]
@@ -86,7 +85,7 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
     else:
         print("Input of haloFamily is not supported.")
         exit()
-    print("DONE")
+    print("DONE\n")
 
 
 
@@ -124,7 +123,11 @@ def singleHalo(x0, t0, mu, epsilon, fixedValue, haloFamily, ax):
 #--------------------------------------------------------------------------
 def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloFamily, ax):
 
-    print("STATUS: Natural Parameter Continuation method for generating a family of %2d orbits around %s ...\n" % (orbitNumber, lagrangian))
+    if orbitNumber == "all":
+        print("STATUS: Natural Parameter Continuation method for generating the whole family of halo orbits around %s ...\n\n" % (lagrangian))
+        orbitNumber = 100000000000
+    else:
+        print("STATUS: Natural Parameter Continuation method for generating a family of %2d halo orbits around %s ...\n\n" % (orbitNumber, lagrangian))
     # sets the iteratively adjusted initial condition
     x_n = x0
     lastX = x_n
@@ -153,8 +156,7 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             try:
                 outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "x")
             except ValueError:
-                print("        No more Orbit has been found.\n"
-                      "DONE")
+                print("\nDONE")
                 return
             outX = outData[0:6]
             outTime = outData[6]
@@ -180,8 +182,8 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
             try:
                 outData = numMethods.diffCorrections(x_n, t0, mu, epsilon, "z")
             except ValueError:
-                print("        No more Orbit has been found.\n"
-                      "DONE")
+                print("\nDONE")
+
                 return
             outX = outData[0:6]
             outTime = outData[6]
@@ -200,8 +202,7 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
         if stability == True:
             color = 'green'
         else:
-            color = 'blue'
-            #color = plt.cm.jet(norm)
+            color = plt.cm.jet(norm)
 
         # plots halo orbit
         halo = numMethods.rk4System(outX, t0, 2*outTime, mu)
@@ -218,7 +219,7 @@ def natParaConti(x0, t0, mu, epsilon, orbitNumber, familyStep, lagrangian, haloF
         else:
             print("Input of haloFamily is not supported.")
             exit()
-    print("DONE")
+    print("DONE\n")
 
 
 

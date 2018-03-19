@@ -2,7 +2,7 @@
 """
 File    : haloCalculation.py
 Author  : Victor Hertel
-Date    : 16.03.2018
+Date    : 18.03.2018
 
 A library of specific functions necessary to find periodic solutions
 to the Circular Restricted Three Body Problem (CR3BP).
@@ -223,7 +223,6 @@ def stm(x, t0, tf, mu):
 #--------------------------------------------------------------------------
 
 def halfPeriod(x0, t0, mu, epsilon):
-#    print("        Calculation of T/2...")
     # declares and initializes actual state x and state at half period xHalfPeriod
     if x0[4] >= 0:
         x = np.ones(6)
@@ -244,6 +243,7 @@ def halfPeriod(x0, t0, mu, epsilon):
         if x0[4] >= 0:
             while x[1] > 0:
                 if timeStep > 5:
+                    print("        Half Period could not be calculated.")
                     raise ValueError
                 xHalfPeriod = x
                 timeStep = timeStep + stepSize
@@ -253,6 +253,7 @@ def halfPeriod(x0, t0, mu, epsilon):
         else:
             while x[1] < 0:
                 if timeStep > 5:
+                    print("        Half Period could not be calculated.")
                     raise ValueError
                 xHalfPeriod = x
                 timeStep = timeStep + stepSize
@@ -319,8 +320,8 @@ def stability(eigenvalues, boundary):
     stabilityIndex = 1/2 * (maximum + 1/maximum)
 
     if stabilityIndex < boundary:
-        print("        Stability Index: %8.2f                         -> NRHO: Yes\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f                         -> NRHO: Yes\n\n" % (stabilityIndex))
         return True
     else:
-        print("        Stability Index: %8.2f                         -> NRHO: No\n" % (stabilityIndex))
+        print("        Stability Index: %8.2f                         -> NRHO: No\n\n" % (stabilityIndex))
         return False

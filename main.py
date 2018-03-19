@@ -2,7 +2,7 @@
 """
 File    : main.py
 Author  : Victor Hertel
-Date    : 16.03.2018
+Date    : 18.03.2018
 
 Computation of halo orbits
 """
@@ -35,12 +35,12 @@ ax = fig.gca(projection='3d')
 
 #--------------------------------------------------------------------------
 # SINGLE HALO ORBIT
-#calculation.singleHalo(l2, t0, mu, 1.0e-8, "x", "southern", ax)
+#calculation.singleHalo(l1, t0, mu, 1.0e-8, "x", "southern", ax)
 #--------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
 # NATURAL PARAMETER CONTINUATION
-#calculation.natParaConti(l1, t0, mu, 1.0e-6, 50, 0.0075, "L1", "northern", ax)
+#calculation.natParaConti(l1, t0, mu, 1.0e-6, "all", 0.002, "L1", "northern", ax)
 #--------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
