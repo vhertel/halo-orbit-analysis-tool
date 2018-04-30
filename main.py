@@ -20,7 +20,6 @@ mFirstPrimary = 5.97237e+24  # Earth
 mSecondPrimary = 7.342e+22  # Moon
 mu = mSecondPrimary / (mSecondPrimary + mFirstPrimary)
 
-fam = L2Family(l2, 0.005, mu)
-print(fam.familyData)
-fam.plot()
+Orbit = Orbit(test, "x", mu)
+Orbit.plot(background="on", haloFamily="southern")
 

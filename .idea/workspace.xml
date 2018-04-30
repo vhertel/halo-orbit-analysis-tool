@@ -2,14 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e8cf5556-88a1-4a41-8afb-0b9777eb9ca5" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/Diagrams/pseudoArcConti.graphml" />
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/Diagrams/classdiagram.vsdx" afterPath="$PROJECT_DIR$/Diagrams/classdiagram.vsdx" />
-      <change beforePath="$PROJECT_DIR$/Diagrams/continuationMethods.graphml" afterPath="$PROJECT_DIR$/Diagrams/natParaConti.graphml" />
-      <change beforePath="$PROJECT_DIR$/Diagrams/main.graphml" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/Diagrams/orbitClass.graphml" afterPath="$PROJECT_DIR$/Diagrams/orbit.graphml" />
-      <change beforePath="$PROJECT_DIR$/~$$classdiagram.~vsdx" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/Diagrams/natParaConti.graphml" afterPath="$PROJECT_DIR$/Diagrams/natParaConti.graphml" />
+      <change beforePath="$PROJECT_DIR$/Diagrams/orbit.graphml" afterPath="$PROJECT_DIR$/Diagrams/orbit.graphml" />
+      <change beforePath="$PROJECT_DIR$/Diagrams/orbitClass.graphml" afterPath="$PROJECT_DIR$/Diagrams/orbitClass.graphml" />
+      <change beforePath="$PROJECT_DIR$/Diagrams/pseudoArcConti.graphml" afterPath="$PROJECT_DIR$/Diagrams/pseudoArcConti.graphml" />
+      <change beforePath="$PROJECT_DIR$/Utility.py" afterPath="$PROJECT_DIR$/Utility.py" />
+      <change beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -23,18 +24,20 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="11" column="26" lean-forward="false" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
-              <folding />
+            <state relative-caret-position="270">
+              <caret line="20" column="25" lean-forward="false" selection-start-line="20" selection-start-column="25" selection-end-line="20" selection-end-column="25" />
+              <folding>
+                <element signature="e#110#128#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Orbit.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Orbit.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Orbit.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="258">
-              <caret line="34" column="26" lean-forward="true" selection-start-line="34" selection-start-column="26" selection-end-line="34" selection-end-column="26" />
+            <state relative-caret-position="405">
+              <caret line="27" column="12" lean-forward="true" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="12" />
               <folding>
                 <element signature="e#114#132#0" expanded="true" />
               </folding>
@@ -45,8 +48,8 @@
       <file leaf-file-name="OrbitFamily.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/OrbitFamily.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="480">
-              <caret line="33" column="26" lean-forward="false" selection-start-line="33" selection-start-column="26" selection-end-line="33" selection-end-column="26" />
+            <state relative-caret-position="247">
+              <caret line="25" column="40" lean-forward="false" selection-start-line="25" selection-start-column="40" selection-end-line="25" selection-end-column="40" />
               <folding>
                 <element signature="e#141#178#0" expanded="true" />
               </folding>
@@ -54,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Utility.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Utility.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Utility.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1755">
-              <caret line="120" column="38" lean-forward="false" selection-start-line="120" selection-start-column="38" selection-end-line="120" selection-end-column="38" />
+            <state relative-caret-position="277">
+              <caret line="682" column="17" lean-forward="true" selection-start-line="682" selection-start-column="17" selection-end-line="682" selection-end-column="17" />
               <folding>
                 <element signature="e#102#113#0" expanded="true" />
               </folding>
@@ -88,6 +91,8 @@
       <find>Plot</find>
       <find>pseudoarc</find>
       <find>utili</find>
+      <find>AMatrix</find>
+      <find>nullspace(</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -118,10 +123,10 @@
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_17.py" />
         <option value="$PROJECT_DIR$/Classes/Utility.py" />
         <option value="$PROJECT_DIR$/Classes/Orbit.py" />
-        <option value="$PROJECT_DIR$/Utility.py" />
         <option value="$PROJECT_DIR$/Orbit.py" />
         <option value="$PROJECT_DIR$/OrbitFamily.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/Utility.py" />
       </list>
     </option>
   </component>
@@ -303,7 +308,7 @@
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.560686" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29551452" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection Results" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298153" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -348,14 +353,14 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/library/haloCalculation.py" />
-    <entry file="file://$PROJECT_DIR$/library/numMethods.py" />
     <entry file="file://$PROJECT_DIR$/library/utilities.py" />
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#110#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -367,7 +372,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#110#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -379,7 +386,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#110#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -391,7 +400,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#110#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -489,40 +500,56 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/matplotlib/text.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="2119" column="0" lean-forward="false" selection-start-line="2119" selection-start-column="0" selection-end-line="2119" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/matplotlib/axes/_axes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="584" column="0" lean-forward="false" selection-start-line="584" selection-start-column="0" selection-end-line="584" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="26" lean-forward="false" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
-          <folding />
+        <state relative-caret-position="270">
+          <caret line="20" column="25" lean-forward="false" selection-start-line="20" selection-start-column="25" selection-end-line="20" selection-end-column="25" />
+          <folding>
+            <element signature="e#110#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/OrbitFamily.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="33" column="26" lean-forward="false" selection-start-line="33" selection-start-column="26" selection-end-line="33" selection-end-column="26" />
+        <state relative-caret-position="247">
+          <caret line="25" column="40" lean-forward="false" selection-start-line="25" selection-start-column="40" selection-end-line="25" selection-end-column="40" />
           <folding>
             <element signature="e#141#178#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Utility.py">
+    <entry file="file://$PROJECT_DIR$/Orbit.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1755">
-          <caret line="120" column="38" lean-forward="false" selection-start-line="120" selection-start-column="38" selection-end-line="120" selection-end-column="38" />
+        <state relative-caret-position="405">
+          <caret line="27" column="12" lean-forward="true" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="12" />
           <folding>
-            <element signature="e#102#113#0" expanded="true" />
+            <element signature="e#114#132#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Orbit.py">
+    <entry file="file://$PROJECT_DIR$/Utility.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="258">
-          <caret line="34" column="26" lean-forward="true" selection-start-line="34" selection-start-column="26" selection-end-line="34" selection-end-column="26" />
+        <state relative-caret-position="277">
+          <caret line="682" column="17" lean-forward="true" selection-start-line="682" selection-start-column="17" selection-end-line="682" selection-end-column="17" />
           <folding>
-            <element signature="e#114#132#0" expanded="true" />
+            <element signature="e#102#113#0" expanded="true" />
           </folding>
         </state>
       </provider>

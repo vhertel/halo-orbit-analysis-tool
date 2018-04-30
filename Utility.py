@@ -686,6 +686,27 @@ class Plot:
         # color = plt.cm.jet(norm)
         color = 'blue'
 
+        #ax.scatter(-mu, 0, 0, color='black', s = 15)
+        ax.scatter(1-mu, 0, 0, color='white', s = 8, label='Moon')
+
+        l = 1-mu
+        p_L1= np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)+mu-l, mu**2*l**2+2*(l**2+mu**2), mu**3-l**3])
+        L1roots = np.roots(p_L1)
+        for i in range(5):
+            if L1roots[i] > - mu and L1roots[i] < l:
+                L1 = np.real(L1roots[i])
+        ax.scatter(L1, 0, 0, color='red', s=3, label='L1/L2')
+
+
+        p_L2 = np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)-(mu+l), mu**2*l**2+2*(l**2-mu**2), -(mu**3+l**3)])
+        L2roots=np.roots(p_L2)
+        for i in range(5):
+            if L2roots[i] > - mu and L2roots[i] > l:
+                L2 = np.real(L2roots[i])
+        ax.scatter(L2, 0, 0, color='red', s=3)
+
+
+
         for i in range(len(data)):
             halo = NumericalMethods.rk4System(data[i][0:6], data[i][6], mu)
             x = halo[:, 0]
@@ -694,7 +715,7 @@ class Plot:
             if haloFamily == "northern":
                 ax.plot(x, y, -z, color=color, linewidth=1)
             elif haloFamily == "southern":
-                ax.plot(x, y, z, color=color, linewidth=1)
+                ax.plot(x, y, z, color=color, linewidth=0.7)
             elif haloFamily == "both":
                 ax.plot(x, y, z, color=color, linewidth=1)
                 ax.plot(x, y, -z, color=color, linewidth=1)
@@ -710,6 +731,10 @@ class Plot:
                 ax.set_zlabel("z Axis")
             else:
                 print("Input of background is not supported.")
+
+        ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=5)
+        ax.view_init(elev = 0, azim = -90)
+        fig.savefig("fig.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
 
         Plot.setAxesEqual(ax)
         plt.show()
