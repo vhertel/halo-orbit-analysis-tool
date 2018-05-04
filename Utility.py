@@ -732,7 +732,7 @@ class Plot:
             else:
                 print("Input of background is not supported.")
 
-        ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=5)
+        #ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=10)
         ax.view_init(elev = 0, azim = -90)
         fig.savefig("fig.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
 

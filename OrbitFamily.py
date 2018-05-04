@@ -27,7 +27,7 @@ class OrbitFamily:
         self.familyData = outData
         print("\nDONE")
 
-    def getNRHOFamily(self):
+    def getNRHOFamily(self, lagrangian):
         pass
 
     def plot(self, lagrangian, haloFamily="both", background="off"):
