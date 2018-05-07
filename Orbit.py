@@ -20,9 +20,9 @@ class Orbit:
     accuracy = 1.0e-6
 
     # initializes by adapting input state to initial state of periodic halo orbits
-    def __init__(self, x0, fixedValue, mu, jacobi=None, stability=None, NRHO=False):
+    def __init__(self, x0, fixedValue, mu, jacobi=None, stability=None, NRHO=None):
         # prints status update
-        print("STATUS: Adapting input state to periodic Halo Orbit...\n")
+#        print("STATUS: Adapting input state to periodic Halo Orbit...\n")
         self.mu = mu
         # stores initial state, period and constraints of halo orbit in 1x3 vector outData
         try:
@@ -30,17 +30,21 @@ class Orbit:
         except ValueError:
             return
         # sets attributes of halo orbit
-        self.data = outData
         self.x0 = outData[0:6]
         self.period = outData[6]
         self.jacobi = jacobi
         self.stability = stability
         self.NRHO = NRHO
-        print("DONE")
+        self.data = outData
+#        print("DONE")
 
     def getNearestNRHO(self):
         # prints status update
         print("STATUS: Adapting input state to initial state of nearest NRHO...")
+        # calculates highest stability index when attribute not given
+        if self.stability is None:
+            Orbit.getStability()
+        # checks whether orbit is aready NRHO
         if self.NRHO is True:
             print("        Halo Orbit is already NRHO.")
         else:
@@ -49,9 +53,6 @@ class Orbit:
                 tau_n = Utility.halfPeriod(self.x0, self.mu, 1.0e-11)
             except ValueError:
                 return
-            # calculates highest stability index when attribute not given
-            if self.stability is None:
-                Orbit.getStability(self)
             # searches for next NRHO using pseudo-arclength continuation method
             while self.NRHO is False:
                 outData = NumericalMethods.diffCorrections(self.x0, self.mu, Orbit.accuracy, tau=tau_n)
@@ -90,6 +91,8 @@ class Orbit:
                 self.data = np.array([x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5], 2 * tau_n])
                 # updates stability index of orbit
                 Orbit.getStability(self)
+                print(self.stability)
+                print(self.x0)
             print("        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
             x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
             print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (
@@ -114,6 +117,8 @@ class Orbit:
         self.stability = 1 / 2 * (maximum + 1 / maximum)
         if self.stability < 5:
             self.NRHO = True
+        else:
+            self.NRHO = False
 
     # plots orbit
     def plot(self, haloFamily="both", background="off"):

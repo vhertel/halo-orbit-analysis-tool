@@ -16,136 +16,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-class OrbitContinuation:
-    accuracy = 1.0e-6
 
-    # --------------------------------------------------------------------------
-    # NATURAL PARAMETER CONTINUATION
-    #
-    # DESCRIPTION:      Creates a family of halo orbits using the Natural Parameter Continuation,
-    #                   a simple strategy based on a single converged solution to find and construct
-    #                   related solutions. One parameter associated with the single converged solution
-    #                   is incremented by a small, specific amount. This modified solution is now
-    #                   employed as an initial guess for a new trajectory. Depending on the gradient of
-    #                   the halo shape, either the x- or z-value is incremented by a specific stepsize,
-    #                   that is calculated for each orbit based on the last two solutions for reaching
-    #                   a uniformed plot with constant distances between the orbits.
-    #
-    #                   The distance between the orbits (orbitDistance) has been successfully tested for the range of 0.005 - 0.0075
-    #
-    # OUTPUT:           No output is generated. The orbits are plotted in the
-    #                   figure that has been created before the function call
-    #
-    # SYNTAX:           natParaConti(x0, mu, epsilon, orbitNumber, orbitDistance, lagrangian, haloFamily, ax)
-    #
-    # x0            =   Initial State Guess
-    # mu            =   Mass ratio of Primaries
-    # epsilon       =   Error Tolerance of Constraints at T/2
-    # orbitNumber   =   Number of Orbits to search for
-    # orbitDistance =   Distance between Orbits
-    # lagrangian    =   Lagrangian Point
-    #                   Input possibilities: {"L1", "L2"}
-    # haloFamily    =   Desired family of Halo Orbits:
-    #                   Input possibilities: {"northern", "southern", "both"}
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def natParaConti(x0, orbitDistance, lagrangian, orbitNumber, mu):
-
-        output = np.zeros((orbitNumber, 7))
-
-        # sets the iteratively adjusted initial condition
-        x_n = x0
-        lastX = x_n
-        outX = x_n
-        # loops through number of orbits
-        for i in range(orbitNumber):
-            # checks whether x- or z-value has changed more since last iteration
-            if abs(lastX[0] - outX[0]) > abs(lastX[2] - outX[2]):
-                # x-value changed more than z-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed x-value)\n" % (i + 1))
-                dz = abs(outX[2] - lastX[2])
-                stepSize = np.sqrt(orbitDistance ** 2 - dz ** 2)
-                if math.isnan(stepSize):
-                    stepSize = orbitDistance / 2
-                # generates next initial guess depending on continuation direction
-                if lagrangian == "L1":
-                    x_n = outX + np.array([stepSize, 0, 0, 0, 0, 0])
-                elif lagrangian == "L2":
-                    x_n = outX - np.array([stepSize, 0, 0, 0, 0, 0])
-                else:
-                    print("Lagrangian type not supported.")
-                    exit()
-                # saves last initial state for comparison of next iteration
-                lastX = outX
-                # calculates initial state
-                try:
-                    outData = NumericalMethods.diffCorrections(x_n, mu, OrbitContinuation.accuracy, fixedValue="x")
-                except ValueError:
-                    print("\nDONE")
-                    return
-                outX = outData[0:6]
-                output[i][:] = outData
-                # output[i][0:6] = outData[0]
-                # output[i][6] = outData[1]
-
-            else:
-                # z-value changed more than x-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed z-value)\n" % (i + 1))
-                dx = abs(outX[0] - lastX[0])
-                stepSize = np.sqrt(orbitDistance ** 2 - dx ** 2)
-                if math.isnan(stepSize):
-                    stepSize = orbitDistance / 2
-                # generates next initial guess depending on continuation direction
-                if lagrangian == "L1":
-                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
-                elif lagrangian == "L2":
-                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
-                else:
-                    print("Lagrangian type not supported.")
-                    exit()
-                # saves last initial state for comparison of next iteration
-                lastX = outX
-                # calculates initial state
-                try:
-                    outData = NumericalMethods.diffCorrections(x_n, mu, OrbitContinuation.accuracy, fixedValue="z")
-                except ValueError:
-                    print("\nDONE")
-                    return
-                outX = outData[0:6]
-                output[i][:] = outData
-                # output[i][0:6] = outData[0]
-                # output[i][6] = outData[1]
-
-        return output
-
-    # --------------------------------------------------------------------------
-    # PSEUDO-ARCLENGTH CONTINUATION
-    # DESCRIPTION:      The Pseudo-Arclength Continuation method is used for finding a family of
-    #                   orbits e.g. a family of related solution. After determining one solution,
-    #                   the method steps in a tangent direction of the free variables vector to
-    #                   generate an initial guess for the next orbit, which is then corrected
-    #                   using the differential corrections method.
-    #
-    # OUTPUT:           No output is generated. The orbit is plotted in the
-    #                   figure that has been created before the function call
-    #
-    # SYNTAX:           pseudoArcLenConti(x0, t0, mu, epsilon, orbitNumber, familyStep, direction, haloFamily, ax)
-    # x0            =   Initial State Guess
-    # t0            =   Time Start
-    # mu            =   Mass ratio of Primaries
-    # epsilon       =   Error Tolerance of Constraints at T/2
-    # orbitNumber   =   Number of Orbits to search for
-    # familyStep    =   Stepsize in x- or z-Direction
-    # haloFamily    =   Desired family of Halo Orbits:
-    #                   Input possibilities: {"northern", "southern", "both"}
-    # ax            =   Allows access to the figure
-    #   x0, orbitDistance, lagrangian, orbitNumber, mu
-
-    # --------------------------------------------------------------------------
-
-    @classmethod
-    def setAccuracy(cls, accuracy):
-        cls.accuracy = accuracy
 
 
 class NumericalMethods:
@@ -374,6 +245,8 @@ class NumericalMethods:
 
         else:
             print("Input parameters not correct.")
+
+
 
 
 class Utility:
@@ -642,6 +515,8 @@ class Utility:
         nnz = (s >= tol).sum()
         ns = vh[nnz:].conj().T
         return ns
+
+
 
 
 class Plot:
