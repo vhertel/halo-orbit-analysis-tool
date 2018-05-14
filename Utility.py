@@ -7,10 +7,9 @@ Utility classes
 """
 
 # Imports
-import math
-import matplotlib as mpl
 import numpy as np
 from numpy.linalg import svd
+import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -20,6 +19,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class NumericalMethods:
+
+    stepNumber = 2000
 
     # --------------------------------------------------------------------------
     # FOURTH ODER RUNGE-KUTTA METHOD
@@ -45,23 +46,64 @@ class NumericalMethods:
     # --------------------------------------------------------------------------
 
     @staticmethod
-    def rk4System(y, tf, mu):
+    def adamsMoultonBashforth(y, tf, mu):
 
         # defines step size depending on time interval [0; tf] and n
-        n = 2000
+        n = 30000
         h = tf / n
+        # declares and initializes matrix w with a row for each time step and 42 columns
+        R = np.zeros((n+1, len(y)))
+        for i in range(len(y)):
+            R[0, i] = y[i]
+
+
+        f_a = Utility.sysEquations(R[0, :], mu)
+
+        xyb = NumericalMethods.rk4System(y, 1 * h, mu)
+        R[1, :] = xyb[2000]
+        f_b = Utility.sysEquations(R[1, :], mu)
+        xyc = NumericalMethods.rk4System(y, 2 * h, mu)
+        R[2, :] = xyc[2000]
+        f_c = Utility.sysEquations(R[2, :], mu)
+        xyd = NumericalMethods.rk4System(y, 3 * h, mu)
+        R[3, :] = xyd[2000]
+        for i in range(n-3):
+            f_d = Utility.sysEquations(R[i+3, :], mu)
+            R[i+4, :] = R[i+3, :] + h/24 * (-9*f_a + 37*f_b - 59*f_c + 55*f_d)
+            f_e = Utility.sysEquations(R[i+4, :], mu)
+            R[i+4, :] = R[i+3, :] + h/720 * (-19*f_a + 106*f_b - 264*f_c + 646*f_d + 251*f_e)
+            f_a = f_b
+            f_b = f_c
+            f_c = f_d
+
+
+        # for i in range(n):
+        #     f_b = Utility.sysEquations(R[i, :], mu)
+        #     R[i+1, :] = R[i,:] + h/2 * (-f_a + 3*f_b)
+        #     f_c = Utility.sysEquations(R[i+1, :], mu)
+        #     R[i+1, :] = R[i, :] + h/12 * (-f_a + 8*f_b + 5*f_c)
+        #     f_a = f_b
+
+        return R
+
+
+    @staticmethod
+    def rk4System(y, tf, mu, stepNumber):
+
+        # defines step size depending on time interval [0; tf] and n
+        h = tf / stepNumber
         # declares and initializes vector t with dimensions (n+1)
-        t = np.zeros(n + 1)
+        t = np.zeros(stepNumber + 1)
         t[0] = 0
         # declares and initializes matrix w with a row for each time step and 42 columns
-        R = np.zeros((len(y), n + 1))
+        R = np.zeros((len(y), stepNumber + 1))
         for i in range(len(y)):
             R[i, 0] = y[i]
 
         # 4th order Runge-Kutta method algorithm
         if len(y) == 42:
 
-            for i in range(n):
+            for i in range(stepNumber):
                 k1 = Utility.sysEquations(R[:, i], mu, t[i])
                 k2 = Utility.sysEquations(R[:, i] + h / 2 * k1[:, 0], mu, t[i] + h / 2)
                 k3 = Utility.sysEquations(R[:, i] + h / 2 * k2[:, 0], mu, t[i] + h / 2)
@@ -72,7 +114,7 @@ class NumericalMethods:
 
         elif len(y) == 6:
 
-            for i in range(n):
+            for i in range(stepNumber):
                 k1 = Utility.sysEquations(R[:, i], mu, t[i])
                 k2 = Utility.sysEquations(R[:, i] + h / 2 * k1, mu, t[i] + h / 2)
                 k3 = Utility.sysEquations(R[:, i] + h / 2 * k2, mu, t[i] + h / 2)
@@ -104,7 +146,7 @@ class NumericalMethods:
             counter = 1
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon or abs(constraints[2]) > epsilon:
-                if counter > 15:
+                if counter > 20:
                     print("        Differential Corrections Method did not converge.")
                     raise ValueError
                 else:
@@ -112,18 +154,18 @@ class NumericalMethods:
                 # calculates the state transition matrix
                 phi = Utility.stm(x, tau, mu)
                 # integrates initial state from t0 to tau_n
-                xRef = NumericalMethods.rk4System(x, tau, mu)
+                xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
                 # calculates the derivation of the state at T/2
-                xdot = Utility.sysEquations(xRef[2000, :], mu)
+                xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
                 # declares and initializes free variable vector with x, z, ydot and tau
                 freeVariables = np.array([[x[0]],
                                           [x[2]],
                                           [x[4]],
                                           [tau]])
                 # declares and initializes the constraint vector with y, xdot and zdot
-                constraints = np.array([[xRef[2000, 1]],
-                                        [xRef[2000, 3]],
-                                        [xRef[2000, 5]]])
+                constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
+                                        [xRef[NumericalMethods.stepNumber, 3]],
+                                        [xRef[NumericalMethods.stepNumber, 5]]])
                 # calculates corrections to the initial state to meet a defined margin of error
                 DF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
@@ -151,7 +193,7 @@ class NumericalMethods:
             try:
                 tau = Utility.halfPeriod(x, mu, 1.0e-11)
             except ValueError:
-                return
+                raise ValueError
 
             # declares and initializes constraint vector
             constraints = np.ones((2, 1))
@@ -163,25 +205,26 @@ class NumericalMethods:
 
                 # constraints are corrected until they meet a defined margin of error
                 while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 15:
+                    if counter > 20:
                         print("        Differential Corrections Method did not converge.")
                         raise ValueError
                     else:
                         counter = counter + 1
+                    print(counter)
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
                     # integrates initial state from 0 to tau_n
-                    xRef = NumericalMethods.rk4System(x, tau, mu)
+                    xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
                     # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[2000, :], mu)
+                    xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
                     # declares and initializes free variable vector with z, ydot and time
                     freeVariables = np.array([[x[2]],
                                               [x[4]],
                                               [tau]])
                     # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([[xRef[2000, 1]],
-                                            [xRef[2000, 3]],
-                                            [xRef[2000, 5]]])
+                    constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
+                                            [xRef[NumericalMethods.stepNumber, 3]],
+                                            [xRef[NumericalMethods.stepNumber, 5]]])
                     # calculates corrections to the initial state to meet a defined margin of error
                     D = np.array([[phi[1, 2], phi[1, 4], xdot[1]],
                                   [phi[3, 2], phi[3, 4], xdot[3]],
@@ -194,31 +237,33 @@ class NumericalMethods:
                     tau = xIter[2, 0]
                     outX = x
                     outTime = tau
+                    print(constraints)
 
             # case of z-amplitude being the fixed variable
             elif fixedValue == "z":
 
                 # constraints are corrected until they meet a defined margin of error
                 while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 15:
+                    if counter > 20:
                         print("        Differential Corrections Method did not converge.")
                         raise ValueError
                     else:
                         counter = counter + 1
+                    print(counter)
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
                     # integrates initial state from 0 to tau_n
-                    xRef = NumericalMethods.rk4System(x, tau, mu)
+                    xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
                     # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[2000, :], mu)
+                    xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
                     # declares and initializes free variable vector with x, ydot and time
                     freeVariables = np.array([[x[0]],
                                               [x[4]],
                                               [tau]])
                     # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([[xRef[2000, 1]],
-                                            [xRef[2000, 3]],
-                                            [xRef[2000, 5]]])
+                    constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
+                                            [xRef[NumericalMethods.stepNumber, 3]],
+                                            [xRef[NumericalMethods.stepNumber, 5]]])
                     # calculates corrections to the initial state to meet a defined margin of error
                     D = np.array([[phi[1, 0], phi[1, 4], xdot[1]],
                                   [phi[3, 0], phi[3, 4], xdot[3]],
@@ -231,6 +276,7 @@ class NumericalMethods:
                     tau = xIter[2, 0]
                     outX = x
                     outTime = tau
+                    print(constraints)
 
             # stores the initial condition and T/2 in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
@@ -245,6 +291,12 @@ class NumericalMethods:
 
         else:
             print("Input parameters not correct.")
+
+
+    @classmethod
+    def setStepNumber(cls, stepNumber):
+        cls.stepNumber = stepNumber
+        print("Step number has been updated: %d" % (cls.stepNumber))
 
 
 
@@ -337,7 +389,7 @@ class Utility:
 
         if len(y) == 42:
             # declares and initializes vector x including the initial position
-            x = np.zeros(3)
+#            x = np.zeros(3)
             # stores initial position in vector x
             x = y[36:39]
             # matrix A is calculated
@@ -368,7 +420,7 @@ class Utility:
             a = np.vstack(a)
             ydot = np.vstack(ydot)
             # declares and initializes vector APhi and fills it with components of matrix APhi
-            APhi = np.zeros(42)
+#            APhi = np.zeros(42)
             APhi = np.vstack((a, ydot))
 
             return APhi
@@ -424,12 +476,12 @@ class Utility:
             for j in range(6):
                 y0[6 * i + j] = I[i, j]
         # numerically integrates the system of ODEs
-        Y = NumericalMethods.rk4System(y0, tf, mu)
+        Y = NumericalMethods.rk4System(y0, tf, mu, NumericalMethods.stepNumber)
         # gets dimension of the matrix Y and stores number of rows in r
         d = np.shape(Y)
         r = d[0]
         # declares and initializes vector including the STM data of the last time step
-        y = np.zeros((r, 36))
+#        y = np.zeros((r, 36))
         y = Y[(r - 1), 0:36]
         # declares and initiazlizes matrix phi and fills it with the elements of q
         phi = np.zeros((6, 6))
@@ -466,8 +518,6 @@ class Utility:
         # step size
         stepSize = 0.5
         timeStep = 0
-        # number of steps for numerical integration
-        n = 2000
         # counter for step size reductions
         counter = 0
 
@@ -480,9 +530,9 @@ class Utility:
                         raise ValueError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
-                    Y = NumericalMethods.rk4System(x0, timeStep, mu)
-                    x = Y[n, :]
-                    # print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
+                    x = Y[NumericalMethods.stepNumber, :]
+                    print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
             else:
                 while x[1] < 0:
                     if timeStep > 2:
@@ -490,9 +540,9 @@ class Utility:
                         raise ValueError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
-                    Y = NumericalMethods.rk4System(x0, timeStep, mu)
-                    x = Y[n, :]
-                    # print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
+                    x = Y[NumericalMethods.stepNumber, :]
+                    print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
 
             # last point before change of sign is defined as starting point for next iteration
             timeStep = timeStep - stepSize
@@ -551,19 +601,22 @@ class Plot:
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
     @staticmethod
-    def plot(data, mu, haloFamily, background):
+    def plot(dataSet1, dataSet2, mu, haloFamily, background):
 
-        # Prepares figure for plot
+        if dataSet2 is None:
+            data = dataSet1
+        else:
+            data = np.vstack([dataSet1, dataSet2])
+
+        # prepares figure for plot
         fig = plt.figure()
         ax = fig.gca(projection='3d')
 
-        # norm = (jacobi - 2.7) / (3.2 - 2.7)  #!!! Hard coded
-        # color = plt.cm.jet(norm)
-        color = 'blue'
-
-        #ax.scatter(-mu, 0, 0, color='black', s = 15)
+        # plots second primary
         ax.scatter(1-mu, 0, 0, color='white', s = 8, label='Moon')
 
+        # plots lagrangian points
+        # L1
         l = 1-mu
         p_L1= np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)+mu-l, mu**2*l**2+2*(l**2+mu**2), mu**3-l**3])
         L1roots = np.roots(p_L1)
@@ -571,8 +624,7 @@ class Plot:
             if L1roots[i] > - mu and L1roots[i] < l:
                 L1 = np.real(L1roots[i])
         ax.scatter(L1, 0, 0, color='red', s=3, label='L1/L2')
-
-
+        # L2
         p_L2 = np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)-(mu+l), mu**2*l**2+2*(l**2-mu**2), -(mu**3+l**3)])
         L2roots=np.roots(p_L2)
         for i in range(5):
@@ -580,10 +632,13 @@ class Plot:
                 L2 = np.real(L2roots[i])
         ax.scatter(L2, 0, 0, color='red', s=3)
 
-
-
+        # plots orbits
         for i in range(len(data)):
-            halo = NumericalMethods.rk4System(data[i][0:6], data[i][6], mu)
+
+            norm = (data[i][0] - 2.7) / (3.2 - 2.7)  #!!! Hard coded
+            color = plt.cm.jet(norm)
+
+            halo = NumericalMethods.rk4System(data[i][2:8], data[i][1], mu, NumericalMethods.stepNumber)
             x = halo[:, 0]
             y = halo[:, 1]
             z = halo[:, 2]
@@ -607,14 +662,27 @@ class Plot:
             else:
                 print("Input of background is not supported.")
 
-        #ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=10)
-        ax.view_init(elev = 0, azim = -90)
-        fig.savefig("fig.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
 
+        #ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=10)
         Plot.setAxesEqual(ax)
+        numOfFigures = 100
+        theta = np.linspace(0, 2*np.pi, numOfFigures)
+        for i in range(0, numOfFigures, 1):
+             ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
+             fig.savefig("fig%d.pdf" % (i), format='pdf', dpi=500, bbox_inches = 'tight')
+             print("Figure %2d has been saved." % (i))
+
         plt.show()
 
-    # @staticmethod
-    # def setAccuracy(accuracy):
-    #    Orbit.setAccuracy(accuracy)
-    #    OrbitContinuation.setAccuracy(accuracy)
+
+    @staticmethod
+    def plotJacobi(data):
+        plt.plot(data[:,2], data[:,0])
+        plt.savefig("jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+        plt.show()
+
+    @staticmethod
+    def plotPeriod(data):
+        plt.plot(data[:,2], data[:,1])
+        plt.savefig("period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+        plt.show()

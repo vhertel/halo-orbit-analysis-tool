@@ -18,27 +18,33 @@ from Utility import Utility
 class Orbit:
     # global variable accuracy
     accuracy = 1.0e-6
+    error = False
 
     # initializes by adapting input state to initial state of periodic halo orbits
-    def __init__(self, x0, fixedValue, mu, jacobi=None, stability=None, NRHO=None):
+    def __init__(self, x0, fixedValue, mu, stability=None, NRHO=None, comment="True"):
         # prints status update
-#        print("STATUS: Adapting input state to periodic Halo Orbit...\n")
+        if comment:
+            print("STATUS: Adapting input state to periodic Halo Orbit...\n")
         self.mu = mu
+        self.stability = stability
+        self.NRHO = NRHO
         # stores initial state, period and constraints of halo orbit in 1x3 vector outData
         try:
             outData = NumericalMethods.diffCorrections(x0, self.mu, Orbit.accuracy, fixedValue=fixedValue)
         except ValueError:
+            Orbit.error = True
             return
         # sets attributes of halo orbit
         self.x0 = outData[0:6]
         self.period = outData[6]
-        self.jacobi = jacobi
-        self.stability = stability
-        self.NRHO = NRHO
-        self.data = outData
-#        print("DONE")
+        Orbit.getJacobi(self)
+        self.data = np.array([self.jacobi, self.period, self.x0[0], self.x0[1], self.x0[2], self.x0[3], self.x0[4], self.x0[5]])
+        if comment:
+            print("DONE")
 
     def getNearestNRHO(self):
+        if Orbit.error == True:
+            return
         # prints status update
         print("STATUS: Adapting input state to initial state of nearest NRHO...")
         # calculates highest stability index when attribute not given
@@ -101,6 +107,8 @@ class Orbit:
 
     # calculates jacobi constant of orbit and sets result as attribute
     def getJacobi(self):
+        if Orbit.error == True:
+            return
         r1 = np.sqrt((self.x0[0] + self.mu) ** 2 + self.x0[1] ** 2 + self.x0[2] ** 2)
         r2 = np.sqrt((self.x0[0] - (1 - self.mu)) ** 2 + self.x0[1] ** 2 + self.x0[2] ** 2)
         self.jacobi = -1 / 2 * (self.x0[3] ** 2 + self.x0[4] ** 2 + self.x0[5] ** 2) + 2 * (
@@ -109,6 +117,8 @@ class Orbit:
 
     # calculates highest stability index of orbit and sets result as attribute
     def getStability(self):
+        if Orbit.error == True:
+            return
         # calculates monodromy matrix
         monodromy = Utility.stm(self.x0, self.period, self.mu)
         # calculates eigenvalues of monodromy matrix
@@ -121,10 +131,10 @@ class Orbit:
             self.NRHO = False
 
     # plots orbit
-    def plot(self, haloFamily="both", background="off"):
-        if self.jacobi is None:
-            Orbit.getJacobi(self)
-        Plot.plot(np.array([self.data]), self.mu, haloFamily, background)
+    def plot(self, dataSet2=None, haloFamily="both", background="off"):
+        if Orbit.error == True:
+            return
+        Plot.plot(np.array([self.data]), dataSet2, self.mu, haloFamily, background)
 
     # sets accuracy
     @classmethod
