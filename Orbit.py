@@ -8,17 +8,18 @@ Orbit Class and NRHO Subclass
 
 # Imports
 import numpy as np
-
 from Utility import NumericalMethods
 from Utility import Plot
 from Utility import Utility
+import time
 
 
 # orbit class
 class Orbit:
-    # global variable accuracy
+
     accuracy = 1.0e-6
     error = False
+    dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
     # initializes by adapting input state to initial state of periodic halo orbits
     def __init__(self, x0, fixedValue, mu, stability=None, NRHO=None, comment="True"):
@@ -46,10 +47,10 @@ class Orbit:
         if Orbit.error == True:
             return
         # prints status update
-        print("STATUS: Adapting input state to initial state of nearest NRHO...")
+        print("STATUS: Adapting input state to initial state of nearest NRHO...\n")
         # calculates highest stability index when attribute not given
         if self.stability is None:
-            Orbit.getStability()
+            Orbit.getStability(self)
         # checks whether orbit is aready NRHO
         if self.NRHO is True:
             print("        Halo Orbit is already NRHO.")
@@ -80,7 +81,7 @@ class Orbit:
                 contiConstraints = np.array([[xRef[2000, 1]],
                                              [xRef[2000, 3]],
                                              [xRef[2000, 5]],
-                                             [((contiFreeVariables - freeVariables).T).dot(nullSpace) + 0.02]])
+                                             [((contiFreeVariables - freeVariables).T).dot(nullSpace) + 0.05]])
                 # calculates corrections to the initial state to meet a defined margin of error
                 GF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
@@ -94,14 +95,14 @@ class Orbit:
                 # sets attributes
                 self.x0 = x_n
                 self.period = 2 * tau_n
-                self.data = np.array([x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5], 2 * tau_n])
+                Orbit.getJacobi(self)
+                self.data = np.array([self.jacobi, self.period, x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]])
                 # updates stability index of orbit
                 Orbit.getStability(self)
-                print(self.stability)
-                print(self.x0)
-            print("        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
+                print("        Current stability index: %8.4f" % (self.stability))
+            print("\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
             x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
-            print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (
+            print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n" % (
             tau_n, contiConstraints[0], contiConstraints[1], contiConstraints[2]))
         print("DONE")
 
@@ -134,7 +135,7 @@ class Orbit:
     def plot(self, dataSet2=None, haloFamily="both", background="off"):
         if Orbit.error == True:
             return
-        Plot.plot(np.array([self.data]), dataSet2, self.mu, haloFamily, background)
+        Plot.plot(np.array([self.data]), dataSet2, self.mu, Orbit.dict, haloFamily, background)
 
     # sets accuracy
     @classmethod

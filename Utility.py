@@ -8,6 +8,7 @@ Utility classes
 
 # Imports
 import numpy as np
+import os
 from numpy.linalg import svd
 import matplotlib as mpl
 mpl.use('TkAgg')
@@ -210,7 +211,6 @@ class NumericalMethods:
                         raise ValueError
                     else:
                         counter = counter + 1
-                    print(counter)
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
                     # integrates initial state from 0 to tau_n
@@ -237,7 +237,6 @@ class NumericalMethods:
                     tau = xIter[2, 0]
                     outX = x
                     outTime = tau
-                    print(constraints)
 
             # case of z-amplitude being the fixed variable
             elif fixedValue == "z":
@@ -249,7 +248,6 @@ class NumericalMethods:
                         raise ValueError
                     else:
                         counter = counter + 1
-                    print(counter)
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
                     # integrates initial state from 0 to tau_n
@@ -276,7 +274,6 @@ class NumericalMethods:
                     tau = xIter[2, 0]
                     outX = x
                     outTime = tau
-                    print(constraints)
 
             # stores the initial condition and T/2 in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
@@ -296,7 +293,6 @@ class NumericalMethods:
     @classmethod
     def setStepNumber(cls, stepNumber):
         cls.stepNumber = stepNumber
-        print("Step number has been updated: %d" % (cls.stepNumber))
 
 
 
@@ -532,7 +528,7 @@ class Utility:
                     timeStep = timeStep + stepSize
                     Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
                     x = Y[NumericalMethods.stepNumber, :]
-                    print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
             else:
                 while x[1] < 0:
                     if timeStep > 2:
@@ -542,7 +538,7 @@ class Utility:
                     timeStep = timeStep + stepSize
                     Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
                     x = Y[NumericalMethods.stepNumber, :]
-                    print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
 
             # last point before change of sign is defined as starting point for next iteration
             timeStep = timeStep - stepSize
@@ -601,12 +597,15 @@ class Plot:
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
     @staticmethod
-    def plot(dataSet1, dataSet2, mu, haloFamily, background):
+    def plot(dataSet1, dataSet2, mu, dict, haloFamily, background):
 
         if dataSet2 is None:
             data = dataSet1
         else:
             data = np.vstack([dataSet1, dataSet2])
+
+        if not os.path.exists(dict + "plots"):
+            os.makedirs(dict + "plots")
 
         # prepares figure for plot
         fig = plt.figure()
@@ -662,6 +661,7 @@ class Plot:
             else:
                 print("Input of background is not supported.")
 
+        plt.show()
 
         #ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=10)
         Plot.setAxesEqual(ax)
@@ -669,20 +669,19 @@ class Plot:
         theta = np.linspace(0, 2*np.pi, numOfFigures)
         for i in range(0, numOfFigures, 1):
              ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
-             fig.savefig("fig%d.pdf" % (i), format='pdf', dpi=500, bbox_inches = 'tight')
-             print("Figure %2d has been saved." % (i))
+             fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=500, bbox_inches = 'tight')
+             #print("Figure %2d has been saved." % (i))
 
-        plt.show()
 
 
     @staticmethod
-    def plotJacobi(data):
+    def plotJacobi(data, dict):
         plt.plot(data[:,2], data[:,0])
-        plt.savefig("jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+        plt.savefig(dict + "plots/jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
         plt.show()
 
     @staticmethod
-    def plotPeriod(data):
+    def plotPeriod(data, dict):
         plt.plot(data[:,2], data[:,1])
-        plt.savefig("period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+        plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
         plt.show()

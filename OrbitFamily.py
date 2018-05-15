@@ -12,10 +12,13 @@ from Utility import Plot, NumericalMethods
 import numpy as np
 import math
 import time
+import os
 
 
 # orbitfamily class
 class OrbitFamily:
+
+    dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
     def __init__(self, x0, orbitDistance, orbitNumber, mu, familyData=None):
         self.x0 = x0
@@ -46,7 +49,9 @@ class OrbitFamily:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        output = open("Output/" + time.strftime("%Y-%m-%dT%H:%M:%S") + ".txt", "w")
+        if not os.path.exists(OrbitFamily.dict):
+            os.makedirs(OrbitFamily.dict)
+        output = open(OrbitFamily.dict + "data.txt", "w")
         output.write("CREATION_DATE        =      " + time.strftime("%Y-%m-%dT%H:%M:%S") + "\n"
                      "ORIGINATOR           =      ASTOS SOLUTIONS GMBH\n\n")
         output.write("META_START\n"
@@ -70,21 +75,21 @@ class OrbitFamily:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        Plot.plot(self.familyData, dataSet2, self.mu, haloFamily, background)
+        Plot.plot(self.familyData, dataSet2, self.mu, OrbitFamily.dict, haloFamily, background)
 
     def plotJacobi(self):
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        Plot.plotJacobi(self.familyData)
+        Plot.plotJacobi(self.familyData, OrbitFamily.dict)
 
     def plotPeriod(self):
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        Plot.plotPeriod(self.familyData)
+        Plot.plotPeriod(self.familyData, OrbitFamily.dict)
 
 
 
@@ -126,7 +131,7 @@ class OrbitContinuation:
 
         # calculates first two orbits
         x_n = x0
-        NumericalMethods.setStepNumber(20000)
+        NumericalMethods.setStepNumber(2000)
         for i in range(2):
             print("        Orbit Number: %2d    (fixed z-value)\n" % (i+1))
             orbit = Orbit(x_n, "z", mu, comment=False)
@@ -195,8 +200,6 @@ class OrbitContinuation:
                 lastX = outX
                 outX = orbit.x0
                 output = np.vstack([output, orbit.data])
-
-            print(orbit.jacobi)
 
         return output
 
