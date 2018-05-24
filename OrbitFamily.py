@@ -37,12 +37,14 @@ class OrbitFamily:
     def getHaloFamily(self):
         # prints status update
         print("STATUS: Generation of a family of %d Halo Orbits around %s...\n" % (self.orbitNumber, self.lagrangian))
-        outData = OrbitContinuation.natParaConti(self.x0, self.orbitDistance, self.lagrangian, self.orbitNumber, self.mu)
-        self.familyData = outData
+        OrbitContinuation.natParaConti(self)
         print("DONE")
 
-    def getNRHOFamily(self, lagrangian):
-        pass
+    def getNRHOFamily(self):
+        orbit = Orbit(self.x0, "z", self.mu)
+        orbit.getClosestNRHO()
+        self.x0 = orbit.x0
+        OrbitContinuation.natParaConti(self)
 
     def writeData(self):
         if self.familyData is None:
@@ -58,7 +60,8 @@ class OrbitFamily:
                      "LAGRANGIAN           =      %s\n"
                      "ORBIT NUMBER         =      %d\n"
                      "ORBIT DISTANCE       =      %f\n"
-                     "META_STOP\n\n" % (self.lagrangian, self.orbitNumber, self.orbitDistance))
+                     "MASS RATIO           =      %11.10f\n"
+                     "META_STOP\n\n" % (self.lagrangian, self.orbitNumber, self.orbitDistance, self.mu))
         output.write("DATA_START\n\n")
         output.write("        JC           Period           x              z            dy/dt\n\n")
         for orbit in self.familyData:
@@ -70,12 +73,12 @@ class OrbitFamily:
         output.write("\nDATA_STOP")
         output.close()
 
-    def plot(self, dataSet2=None, haloFamily="both", background="off"):
+    def plot(self, haloFamily="both", background="off", save=False):
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        Plot.plot(self.familyData, dataSet2, self.mu, OrbitFamily.dict, haloFamily, background)
+        Plot.plot(self.familyData, self.mu, OrbitFamily.dict, haloFamily, background, save)
 
     def plotJacobi(self):
         if self.familyData is None:
@@ -95,8 +98,6 @@ class OrbitFamily:
 
 
 class OrbitContinuation:
-    accuracy = 1.0e-6
-
     # --------------------------------------------------------------------------
     # NATURAL PARAMETER CONTINUATION
     #
@@ -127,51 +128,49 @@ class OrbitContinuation:
     #                   Input possibilities: {"northern", "southern", "both"}
     # --------------------------------------------------------------------------
     @staticmethod
-    def natParaConti(x0, orbitDistance, lagrangian, orbitNumber, mu):
-
+    def natParaConti(family):
         # calculates first two orbits
-        x_n = x0
-        NumericalMethods.setStepNumber(2000)
+        x_n = family.x0
+        print("        Orbit Number: 1    (fixed z-value)\n")
         for i in range(2):
-            print("        Orbit Number: %2d    (fixed z-value)\n" % (i+1))
-            orbit = Orbit(x_n, "z", mu, comment=False)
+            orbit = Orbit(x_n, "z", family.mu, comment=False)
             if Orbit.error == True:
-                return output
-            orbit.getJacobi()
+                family.orbitNumber = len(output)
+                family.familyData = output
+                return
             if i == 0:
-                lastX = orbit.x0
-                output = orbit.data
-                x_n = lastX - np.array([0, 0, orbitDistance, 0, 0, 0])
-            else:
                 outX = orbit.x0
-                output = np.vstack([output, orbit.data])
+                orbit.getJacobi()
+                output = orbit.data
+                x_n = outX - np.array([0, 0, 0.0001, 0, 0, 0])
+            else:
+                lastX = orbit.x0
+
         # loops through number of additional orbits
-        for i in range(orbitNumber-2):
-            if i > 35:
-                #stepNumber = round(2000 + 18000/orbitNumber * (i+2))
-                #NumericalMethods.setStepNumber(stepNumber)
-                NumericalMethods.setStepNumber(20000)
+        for i in range(family.orbitNumber-1):
 
             # checks whether x- or z-value has changed more since last iteration
             if abs(lastX[0] - outX[0]) > abs(lastX[2] - outX[2]):
                 # x-value changed more than z-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed x-value)\n" % (i + 3))
+                print("        Orbit Number: %2d    (fixed x-value)\n" % (i + 2))
                 dz = abs(outX[2] - lastX[2])
-                stepSize = np.sqrt(orbitDistance ** 2 - dz ** 2)
+                stepSize = np.sqrt(family.orbitDistance**2 - dz**2)
                 if math.isnan(stepSize):
-                    stepSize = orbitDistance / 2
+                    stepSize = family.orbitDistance / 2
                 # generates next initial guess depending on continuation direction
-                if lagrangian == "L1":
+                if family.lagrangian == "L1":
                     x_n = outX + np.array([stepSize, 0, 0, 0, 0, 0])   # +
-                elif lagrangian == "L2":
+                elif family.lagrangian == "L2":
                     x_n = outX - np.array([stepSize, 0, 0, 0, 0, 0])   # -
                 else:
                     print("Lagrangian type not supported.")
                     exit()
                 # calculates initial state
-                orbit = Orbit(x_n, "x", mu, comment=False)
+                orbit = Orbit(x_n, "x", family.mu, comment=False)
                 if Orbit.error == True:
-                    return output
+                    family.orbitNumber = len(output)
+                    family.familyData = output
+                    return
                 # saves last initial state for comparison of next iteration
                 lastX = outX
                 outX = orbit.x0
@@ -179,31 +178,29 @@ class OrbitContinuation:
 
             else:
                 # z-value changed more than x-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed z-value)\n" % (i + 3))
+                print("        Orbit Number: %2d    (fixed z-value)\n" % (i + 2))
                 dx = abs(outX[0] - lastX[0])
-                stepSize = np.sqrt(orbitDistance ** 2 - dx ** 2)
+                stepSize = np.sqrt(family.orbitDistance ** 2 - dx ** 2)
                 if math.isnan(stepSize):
-                    stepSize = orbitDistance / 2
+                    stepSize = family.orbitDistance / 2
                 # generates next initial guess depending on continuation direction
-                if lagrangian == "L1":
+                if family.lagrangian == "L1":
                     x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])   # -
-                elif lagrangian == "L2":
+                elif family.lagrangian == "L2":
                     x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])   # -
                 else:
                     print("Lagrangian type not supported.")
                     exit()
                 # calculates initial state
-                orbit = Orbit(x_n, "z", mu, comment=False)
+                orbit = Orbit(x_n, "z", family.mu, comment=False)
                 if Orbit.error == True:
-                    return output
+                    family.orbitNumber = len(output)
+                    family.familyData = output
+                    return
                 # saves last initial state for comparison of next iteration
                 lastX = outX
                 outX = orbit.x0
                 output = np.vstack([output, orbit.data])
 
-        return output
-
-
-    @classmethod
-    def setAccuracy(cls, accuracy):
-        cls.accuracy = accuracy
+        family.familyData = output
+        return

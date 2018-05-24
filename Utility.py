@@ -8,6 +8,7 @@ Utility classes
 
 # Imports
 import numpy as np
+from scipy.integrate import odeint
 import os
 from numpy.linalg import svd
 import matplotlib as mpl
@@ -20,114 +21,6 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class NumericalMethods:
-
-    stepNumber = 2000
-
-    # --------------------------------------------------------------------------
-    # FOURTH ODER RUNGE-KUTTA METHOD
-    #
-    # DESCRIPTION:      The function rk4System() approximates the solutions of a system of m
-    #                   differential equations that are written in the form
-    #
-    #                   dy1/dt = f1(t,y1,y2,...,ym)
-    #                   dy2/dt = f2(t,y1,y2,...,ym)
-    #                   ...
-    #                   dym/dt = fm(t,y1,y2,...,ym)
-    #
-    #                   with t in the interval [0; tf] and the m-dimensional initial conditions
-    #                   vector y0. The accuracy depends on the step size n.
-    #
-    # OUTPUT:           A matrix consisting of a row for each time and 42 columns including the elements
-    #                   of the State Transition Matrix and the state vector dx/dt
-    #
-    # SYNTAX:           rk4System(y, tf, mu)
-    # y             =   Position values of state vector
-    # tf            =   Final time
-    # mu            =   Mass ratio of Primaries
-    # --------------------------------------------------------------------------
-
-    @staticmethod
-    def adamsMoultonBashforth(y, tf, mu):
-
-        # defines step size depending on time interval [0; tf] and n
-        n = 30000
-        h = tf / n
-        # declares and initializes matrix w with a row for each time step and 42 columns
-        R = np.zeros((n+1, len(y)))
-        for i in range(len(y)):
-            R[0, i] = y[i]
-
-
-        f_a = Utility.sysEquations(R[0, :], mu)
-
-        xyb = NumericalMethods.rk4System(y, 1 * h, mu)
-        R[1, :] = xyb[2000]
-        f_b = Utility.sysEquations(R[1, :], mu)
-        xyc = NumericalMethods.rk4System(y, 2 * h, mu)
-        R[2, :] = xyc[2000]
-        f_c = Utility.sysEquations(R[2, :], mu)
-        xyd = NumericalMethods.rk4System(y, 3 * h, mu)
-        R[3, :] = xyd[2000]
-        for i in range(n-3):
-            f_d = Utility.sysEquations(R[i+3, :], mu)
-            R[i+4, :] = R[i+3, :] + h/24 * (-9*f_a + 37*f_b - 59*f_c + 55*f_d)
-            f_e = Utility.sysEquations(R[i+4, :], mu)
-            R[i+4, :] = R[i+3, :] + h/720 * (-19*f_a + 106*f_b - 264*f_c + 646*f_d + 251*f_e)
-            f_a = f_b
-            f_b = f_c
-            f_c = f_d
-
-
-        # for i in range(n):
-        #     f_b = Utility.sysEquations(R[i, :], mu)
-        #     R[i+1, :] = R[i,:] + h/2 * (-f_a + 3*f_b)
-        #     f_c = Utility.sysEquations(R[i+1, :], mu)
-        #     R[i+1, :] = R[i, :] + h/12 * (-f_a + 8*f_b + 5*f_c)
-        #     f_a = f_b
-
-        return R
-
-
-    @staticmethod
-    def rk4System(y, tf, mu, stepNumber):
-
-        # defines step size depending on time interval [0; tf] and n
-        h = tf / stepNumber
-        # declares and initializes vector t with dimensions (n+1)
-        t = np.zeros(stepNumber + 1)
-        t[0] = 0
-        # declares and initializes matrix w with a row for each time step and 42 columns
-        R = np.zeros((len(y), stepNumber + 1))
-        for i in range(len(y)):
-            R[i, 0] = y[i]
-
-        # 4th order Runge-Kutta method algorithm
-        if len(y) == 42:
-
-            for i in range(stepNumber):
-                k1 = Utility.sysEquations(R[:, i], mu, t[i])
-                k2 = Utility.sysEquations(R[:, i] + h / 2 * k1[:, 0], mu, t[i] + h / 2)
-                k3 = Utility.sysEquations(R[:, i] + h / 2 * k2[:, 0], mu, t[i] + h / 2)
-                k4 = Utility.sysEquations(R[:, i] + h * k3[:, 0], mu, t[i] + h)
-                R[:, i + 1] = R[:, i] + h / 6 * (k1[:, 0] + 2 * k2[:, 0] + 2 * k3[:, 0] + k4[:, 0])
-                t[i + 1] = t[i] + h
-            R = R.T
-
-        elif len(y) == 6:
-
-            for i in range(stepNumber):
-                k1 = Utility.sysEquations(R[:, i], mu, t[i])
-                k2 = Utility.sysEquations(R[:, i] + h / 2 * k1, mu, t[i] + h / 2)
-                k3 = Utility.sysEquations(R[:, i] + h / 2 * k2, mu, t[i] + h / 2)
-                k4 = Utility.sysEquations(R[:, i] + h * k3, mu, t[i] + h)
-                R[:, i + 1] = R[:, i] + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-                t[i + 1] = t[i] + h
-            R = R.T
-
-        else:
-            print("Dimension of input parameter y is not supported.")
-
-        return R
 
     # --------------------------------------------------------------------------
     # DIFFERENTIAL CORRECTIONS METHOD
@@ -147,7 +40,7 @@ class NumericalMethods:
             counter = 1
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon or abs(constraints[2]) > epsilon:
-                if counter > 20:
+                if counter > 10:
                     print("        Differential Corrections Method did not converge.")
                     raise ValueError
                 else:
@@ -155,27 +48,23 @@ class NumericalMethods:
                 # calculates the state transition matrix
                 phi = Utility.stm(x, tau, mu)
                 # integrates initial state from t0 to tau_n
-                xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
+                t = np.linspace(0, tau, num=200000)
+                xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
                 # calculates the derivation of the state at T/2
-                xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
+                xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
                 # declares and initializes free variable vector with x, z, ydot and tau
-                freeVariables = np.array([[x[0]],
-                                          [x[2]],
-                                          [x[4]],
-                                          [tau]])
+                freeVariables = np.array([x[0], x[2], x[4], tau])
                 # declares and initializes the constraint vector with y, xdot and zdot
-                constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
-                                        [xRef[NumericalMethods.stepNumber, 3]],
-                                        [xRef[NumericalMethods.stepNumber, 5]]])
+                constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
                 # calculates corrections to the initial state to meet a defined margin of error
                 DF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
                                [phi[5, 0], phi[5, 2], phi[5, 4], xdot[5]]])
                 xIter = freeVariables - ((DF.T).dot(np.linalg.inv(DF.dot(DF.T)))).dot(constraints)
                 # sets the updated initial condition vector
-                x = np.array([xIter[0, 0], 0, xIter[1, 0], 0, xIter[2, 0], 0])
+                x = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
                 # sets T/2 of updated initial conditions
-                tau = xIter[3, 0]
+                tau = xIter[3]
                 counter = counter + 1
             # prints status update
             #            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (counter, x[0], x[1], x[2], x[3], x[4], x[5]))
@@ -206,25 +95,22 @@ class NumericalMethods:
 
                 # constraints are corrected until they meet a defined margin of error
                 while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 20:
+                    if counter > 10:
                         print("        Differential Corrections Method did not converge.")
                         raise ValueError
                     else:
                         counter = counter + 1
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
-                    # integrates initial state from 0 to tau_n
-                    xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
+                    # integrates initial state from 0 to tau
+                    t = np.linspace(0, tau, num=200000)
+                    xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
                     # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
+                    xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
                     # declares and initializes free variable vector with z, ydot and time
-                    freeVariables = np.array([[x[2]],
-                                              [x[4]],
-                                              [tau]])
+                    freeVariables = np.array([x[2], x[4], tau])
                     # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
-                                            [xRef[NumericalMethods.stepNumber, 3]],
-                                            [xRef[NumericalMethods.stepNumber, 5]]])
+                    constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
                     # calculates corrections to the initial state to meet a defined margin of error
                     D = np.array([[phi[1, 2], phi[1, 4], xdot[1]],
                                   [phi[3, 2], phi[3, 4], xdot[3]],
@@ -232,9 +118,9 @@ class NumericalMethods:
                     DF = np.linalg.inv(D)
                     xIter = freeVariables - DF.dot(constraints)
                     # sets the updated initial condition vector
-                    x = np.array([x[0], 0, xIter[0, 0], 0, xIter[1, 0], 0])
+                    x = np.array([x[0], 0, xIter[0], 0, xIter[1], 0])
                     # calculates T/2 with updated initial conditions
-                    tau = xIter[2, 0]
+                    tau = xIter[2]
                     outX = x
                     outTime = tau
 
@@ -243,25 +129,22 @@ class NumericalMethods:
 
                 # constraints are corrected until they meet a defined margin of error
                 while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 20:
+                    if counter > 10:
                         print("        Differential Corrections Method did not converge.")
                         raise ValueError
                     else:
                         counter = counter + 1
                     # calculates the state transition matrix
                     phi = Utility.stm(x, tau, mu)
-                    # integrates initial state from 0 to tau_n
-                    xRef = NumericalMethods.rk4System(x, tau, mu, NumericalMethods.stepNumber)
+                    # integrates initial state from 0 to tau
+                    t = np.linspace(0, tau, num=200000)
+                    xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
                     # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[NumericalMethods.stepNumber, :], mu)
+                    xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
                     # declares and initializes free variable vector with x, ydot and time
-                    freeVariables = np.array([[x[0]],
-                                              [x[4]],
-                                              [tau]])
+                    freeVariables = np.array([x[0], x[4], tau])
                     # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([[xRef[NumericalMethods.stepNumber, 1]],
-                                            [xRef[NumericalMethods.stepNumber, 3]],
-                                            [xRef[NumericalMethods.stepNumber, 5]]])
+                    constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
                     # calculates corrections to the initial state to meet a defined margin of error
                     D = np.array([[phi[1, 0], phi[1, 4], xdot[1]],
                                   [phi[3, 0], phi[3, 4], xdot[3]],
@@ -269,9 +152,9 @@ class NumericalMethods:
                     DF = np.linalg.inv(D)
                     xIter = freeVariables - DF.dot(constraints)
                     # sets the updated initial condition vector
-                    x = np.array([xIter[0, 0], 0, x[2], 0, xIter[1, 0], 0])
+                    x = np.array([xIter[0], 0, x[2], 0, xIter[1], 0])
                     # calculates T/2 with updated initial conditions
-                    tau = xIter[2, 0]
+                    tau = xIter[2]
                     outX = x
                     outTime = tau
 
@@ -288,12 +171,6 @@ class NumericalMethods:
 
         else:
             print("Input parameters not correct.")
-
-
-    @classmethod
-    def setStepNumber(cls, stepNumber):
-        cls.stepNumber = stepNumber
-
 
 
 
@@ -381,11 +258,9 @@ class Utility:
     # --------------------------------------------------------------------------
 
     @staticmethod
-    def sysEquations(y, mu, t="0"):
+    def sysEquations(y, t, mu):
 
         if len(y) == 42:
-            # declares and initializes vector x including the initial position
-#            x = np.zeros(3)
             # stores initial position in vector x
             x = y[36:39]
             # matrix A is calculated
@@ -412,12 +287,8 @@ class Utility:
                                      r2 ** 3),
                              y[37] - 2 * y[39] - ((1 - mu) * y[37]) / (r1 ** 3) - (mu * y[37]) / (r2 ** 3),
                              - ((1 - mu) * y[38]) / (r1 ** 3) - (mu * y[38]) / (r2 ** 3)])
-            # transposes horizontal vectors a and c to vertical vectors
-            a = np.vstack(a)
-            ydot = np.vstack(ydot)
-            # declares and initializes vector APhi and fills it with components of matrix APhi
-#            APhi = np.zeros(42)
-            APhi = np.vstack((a, ydot))
+
+            APhi = np.concatenate((a,ydot))
 
             return APhi
 
@@ -472,13 +343,10 @@ class Utility:
             for j in range(6):
                 y0[6 * i + j] = I[i, j]
         # numerically integrates the system of ODEs
-        Y = NumericalMethods.rk4System(y0, tf, mu, NumericalMethods.stepNumber)
-        # gets dimension of the matrix Y and stores number of rows in r
-        d = np.shape(Y)
-        r = d[0]
+        t = np.linspace(0, tf, num=10000)
+        Y = odeint(Utility.sysEquations, y0, t, args=(mu,))
         # declares and initializes vector including the STM data of the last time step
-#        y = np.zeros((r, 36))
-        y = Y[(r - 1), 0:36]
+        y = Y[-1, 0:36]
         # declares and initiazlizes matrix phi and fills it with the elements of q
         phi = np.zeros((6, 6))
         for i in range(6):
@@ -526,8 +394,9 @@ class Utility:
                         raise ValueError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
-                    Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
-                    x = Y[NumericalMethods.stepNumber, :]
+                    t = np.linspace(0, timeStep, num=10000)
+                    Y = odeint(Utility.sysEquations, x0, t, args=(mu,))
+                    x = Y[-1, :]
                     #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
             else:
                 while x[1] < 0:
@@ -536,8 +405,9 @@ class Utility:
                         raise ValueError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
-                    Y = NumericalMethods.rk4System(x0, timeStep, mu, NumericalMethods.stepNumber)
-                    x = Y[NumericalMethods.stepNumber, :]
+                    t = np.linspace(0, timeStep, num=10000)
+                    Y = odeint(Utility.sysEquations, x0, t, args=(mu,))
+                    x = Y[-1, :]
                     #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
 
             # last point before change of sign is defined as starting point for next iteration
@@ -552,6 +422,25 @@ class Utility:
         tHalfPeriod = timeStep
 
         return tHalfPeriod
+
+
+    @staticmethod
+    def lagrangianPosition(mu):
+        # L1
+        l = 1-mu
+        p_L1= np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)+mu-l, mu**2*l**2+2*(l**2+mu**2), mu**3-l**3])
+        L1roots = np.roots(p_L1)
+        for i in range(5):
+            if L1roots[i] > - mu and L1roots[i] < l:
+                L1 = np.real(L1roots[i])
+        # L2
+        p_L2 = np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)-(mu+l), mu**2*l**2+2*(l**2-mu**2), -(mu**3+l**3)])
+        L2roots=np.roots(p_L2)
+        for i in range(5):
+            if L2roots[i] > - mu and L2roots[i] > l:
+                L2 = np.real(L2roots[i])
+
+        return np.array([L1, L2])
 
     @staticmethod
     def nullspace(A, atol=1e-13, rtol=0):
@@ -569,85 +458,57 @@ class Plot:
 
     @staticmethod
     def setAxesEqual(ax):
-        '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
-        cubes as cubes, etc..  This is one possible solution to Matplotlib's
-        ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
-
-        Input
-          ax: a matplotlib axis, e.g., as output from plt.gca().
-        '''
-
         x_limits = ax.get_xlim3d()
         y_limits = ax.get_ylim3d()
         z_limits = ax.get_zlim3d()
-
         x_range = abs(x_limits[1] - x_limits[0])
         x_middle = np.mean(x_limits)
         y_range = abs(y_limits[1] - y_limits[0])
         y_middle = np.mean(y_limits)
         z_range = abs(z_limits[1] - z_limits[0])
         z_middle = np.mean(z_limits)
-
-        # The plot bounding box is a sphere in the sense of the infinity
-        # norm, hence I call half the max range the plot radius.
         plot_radius = 0.5 * max([x_range, y_range, z_range])
-
         ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
         ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+
     @staticmethod
-    def plot(dataSet1, dataSet2, mu, dict, haloFamily, background):
-
-        if dataSet2 is None:
-            data = dataSet1
-        else:
-            data = np.vstack([dataSet1, dataSet2])
-
-        if not os.path.exists(dict + "plots"):
-            os.makedirs(dict + "plots")
+    def plot(data, mu, dict, haloFamily, background, save):
 
         # prepares figure for plot
         fig = plt.figure()
         ax = fig.gca(projection='3d')
 
-        # plots second primary
-        ax.scatter(1-mu, 0, 0, color='white', s = 8, label='Moon')
-
         # plots lagrangian points
-        # L1
-        l = 1-mu
-        p_L1= np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)+mu-l, mu**2*l**2+2*(l**2+mu**2), mu**3-l**3])
-        L1roots = np.roots(p_L1)
-        for i in range(5):
-            if L1roots[i] > - mu and L1roots[i] < l:
-                L1 = np.real(L1roots[i])
-        ax.scatter(L1, 0, 0, color='red', s=3, label='L1/L2')
-        # L2
-        p_L2 = np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)-(mu+l), mu**2*l**2+2*(l**2-mu**2), -(mu**3+l**3)])
-        L2roots=np.roots(p_L2)
-        for i in range(5):
-            if L2roots[i] > - mu and L2roots[i] > l:
-                L2 = np.real(L2roots[i])
-        ax.scatter(L2, 0, 0, color='red', s=3)
+        lagrangian = Utility.lagrangianPosition(mu)
+        ax.scatter(lagrangian[0], 0, 0, color='blue', s=0.3, label='L1/L2')
+        ax.scatter(lagrangian[1], 0, 0, color='blue', s=0.3, label='L1/L2')
+
+        # plots second primary
+        #ax.scatter(-mu, 0, 0, color='blue', s = 3)
+        ax.scatter(1-mu, 0, 0, color='grey', s = 1, label='Moon')
+
+        jacobiMax = max(data[:, 0])
+        jacobiMin = min(data[:, 0])
 
         # plots orbits
         for i in range(len(data)):
 
-            norm = (data[i][0] - 2.7) / (3.2 - 2.7)  #!!! Hard coded
-            color = plt.cm.jet(norm)
-
-            halo = NumericalMethods.rk4System(data[i][2:8], data[i][1], mu, NumericalMethods.stepNumber)
+            norm = (data[i,0] - jacobiMin) / (jacobiMax - jacobiMin)
+            color = plt.cm.hsv_r(norm)
+            t = np.linspace(0, data[i][1], num=10000)
+            halo = odeint(Utility.sysEquations, data[i][2:8], t, args=(mu,))
             x = halo[:, 0]
             y = halo[:, 1]
             z = halo[:, 2]
             if haloFamily == "northern":
-                ax.plot(x, y, -z, color=color, linewidth=1)
+                ax.plot(x, y, -z, color=color, linewidth=0.25)
             elif haloFamily == "southern":
-                ax.plot(x, y, z, color=color, linewidth=0.7)
+                ax.plot(x, y, z, color=color, linewidth=0.25)
             elif haloFamily == "both":
-                ax.plot(x, y, z, color=color, linewidth=1)
-                ax.plot(x, y, -z, color=color, linewidth=1)
+                ax.plot(x, y, z, color=color, linewidth=0.25)
+                ax.plot(x, y, -z, color=color, linewidth=0.25)
             else:
                 print("Input of haloFamily is not supported.")
                 exit()
@@ -661,27 +522,123 @@ class Plot:
             else:
                 print("Input of background is not supported.")
 
-        plt.show()
-
-        #ax.legend(loc="center right", markerscale=1., scatterpoints=1, fontsize=10)
         Plot.setAxesEqual(ax)
-        numOfFigures = 100
-        theta = np.linspace(0, 2*np.pi, numOfFigures)
-        for i in range(0, numOfFigures, 1):
-             ax.view_init(elev = 0 + 20 * np.sin(theta[i]), azim = (i*(360/numOfFigures) + 270))
-             fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=500, bbox_inches = 'tight')
-             #print("Figure %2d has been saved." % (i))
+        plt.show()
 
+        if save:
+            if not os.path.exists(dict + "plots"):
+                os.makedirs(dict + "plots")
+            print("\nSaving plots..")
+            numOfFigures = 100
+            theta = np.linspace(0, 2*np.pi, numOfFigures)
+            for i in range(0, numOfFigures, 1):
+                 ax.view_init(0, i*(360/numOfFigures) + 270)
+                 fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=400, bbox_inches = 'tight')
+            print("DONE")
 
 
     @staticmethod
-    def plotJacobi(data, dict):
-        plt.plot(data[:,2], data[:,0])
-        plt.savefig(dict + "plots/jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+    def plotJacobi(data, dict, save):
+        plt.title("Earth - Moon L1/L2")
+        plt.xlabel("x-Axis")
+        plt.ylabel("Jacobi Constant")
+        for element in data:
+            if element[2] > 1:
+                color = 'blue'
+            else:
+                color = 'red'
+            plt.scatter(element[2], element[0], s=0.5, color=color)
+        if save:
+            if not os.path.exists(dict + "plots"):
+                os.makedirs(dict + "plots")
+            plt.savefig(dict + "plots/jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
         plt.show()
 
+
     @staticmethod
-    def plotPeriod(data, dict):
-        plt.plot(data[:,2], data[:,1])
-        plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+    def plotPeriod(data, dict, save):
+        plt.title("Earth - Moon L1/L2")
+        plt.xlabel("x-Axis")
+        plt.ylabel("Period")
+        for element in data:
+            if element[2] > 1:
+                color = 'blue'
+            else:
+                color = 'red'
+            plt.scatter(element[2], element[1], s=0.5, color=color)
+        if save:
+            if not os.path.exists(dict + "plots"):
+                os.makedirs(dict + "plots")
+            plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
         plt.show()
+
+
+    @staticmethod
+    def plotStability(data, mu, dict, save):
+        plt.title("Earth - Moon L1/L2")
+        plt.xlabel("x-Axis")
+        plt.ylabel("Stability Index")
+        for element in data:
+            monodromy = Utility.stm(element[2:8], element[1], mu)
+            eigenvalues, eigenvectors = np.linalg.eig(monodromy)
+            maximum = max(abs(eigenvalues))
+            stability = 1 / 2 * (maximum + 1 / maximum)
+            if element[2] > 1:
+                color = 'blue'
+            else:
+                color = 'red'
+            plt.scatter(element[2], stability, s=0.5, color=color)
+        if save:
+            if not os.path.exists(dict + "plots"):
+                os.makedirs(dict + "plots")
+            plt.savefig(dict + "plots/stability.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+        plt.show()
+
+
+    @staticmethod
+    def plotFromTable(folder, jacobi=False, period=False, stability=False, orbits=False, orbitNumber=None, haloFamily="both", background="off", save=False):
+
+        table = open("Output/" + folder + "/data.txt", "r")
+        for lines in table:
+
+            if "MASS RATIO" in lines:
+                line = lines.split()
+                mu = float(line[3])
+            if "ORBIT NUMBER" in lines:
+                line = lines.split()
+                number = int(line[3])
+            if "DATA_START" in lines:
+                for i in range(4):
+                    line = table.readline()
+                words = line.split()
+                for i in range(3):
+                    words.insert(2*i + 3, 0)
+                data = words
+                while line != "\n":
+                    words = line.split()
+                    for i in range(3):
+                        words.insert(2*i + 3, 0)
+                    data = np.vstack([data, words])
+                    line = table.readline()
+
+                data = data.astype(np.float)
+        table.close()
+
+        dict = "Output/" + folder + "/"
+
+        if jacobi:
+            Plot.plotJacobi(data, dict, save)
+        if period:
+            Plot.plotPeriod(data, dict, save)
+        if stability:
+            Plot.plotStability(data, mu, dict, save)
+        if orbits:
+            if orbitNumber is None:
+                Plot.plot(data, mu, dict=dict, haloFamily=haloFamily, background=background, save=save)
+            else:
+                step = number/(orbitNumber-1)
+                reducedData = data[0, :]
+                for i in range(orbitNumber-2):
+                    reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
+                reducedData = np.vstack([reducedData, data[-1, :]])
+                Plot.plot(reducedData, mu, dict=dict, haloFamily=haloFamily, background=background, save=save)

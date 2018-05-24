@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/Orbit.py" line="49" mnemonic="7" />
-  </component>
   <component name="ChangeListManager">
     <list default="true" id="e8cf5556-88a1-4a41-8afb-0b9777eb9ca5" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
@@ -21,11 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="17" selection-start-line="17" selection-end-line="17" />
+            <state relative-caret-position="390">
+              <caret line="26" column="13" selection-start-line="26" selection-start-column="13" selection-end-line="26" selection-end-column="13" />
               <folding>
                 <element signature="e#110#128#0" expanded="true" />
               </folding>
@@ -36,23 +33,17 @@
       <file leaf-file-name="Orbit.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Orbit.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="100" column="40" selection-start-line="100" selection-start-column="40" selection-end-line="100" selection-end-column="40" />
-              <folding>
-                <element signature="e#114#132#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="735">
+              <caret line="53" column="34" lean-forward="true" selection-start-line="53" selection-start-column="34" selection-end-line="53" selection-end-column="34" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="OrbitFamily.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="OrbitFamily.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/OrbitFamily.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3066">
-              <caret line="209" selection-start-line="209" selection-end-line="209" />
-              <folding>
-                <element signature="e#141#164#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="382">
+              <caret line="132" column="23" lean-forward="true" selection-start-line="132" selection-start-column="23" selection-end-line="132" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -60,11 +51,8 @@
       <file leaf-file-name="Utility.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Utility.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="24">
-              <caret line="600" selection-start-line="600" selection-end-line="600" />
-              <folding>
-                <element signature="e#102#120#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="3855">
+              <caret line="261" selection-start-line="261" selection-end-line="261" />
             </state>
           </provider>
         </entry>
@@ -80,24 +68,10 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>x0</find>
-      <find>t0</find>
-      <find>stm</find>
-      <find>familyStep</find>
-      <find>accu</find>
-      <find>freeVariables</find>
-      <find>acc</find>
-      <find>diffCorrections</find>
-      <find>Plot</find>
-      <find>pseudoarc</find>
       <find>utili</find>
       <find>AMatrix</find>
       <find>nullspace(</find>
       <find>halfpe</find>
-      <find>sys</find>
-      <find>sysEquations</find>
-      <find>halfperiod</find>
-      <find>rk4</find>
       <find>adams</find>
       <find>n</find>
       <find>rk4System</find>
@@ -107,6 +81,23 @@
       <find>timeStepNumber</find>
       <find>setStep</find>
       <find>print</find>
+      <find>halfperiod</find>
+      <find>rk4Syste</find>
+      <find>sys</find>
+      <find>sysEquations</find>
+      <find>sysE</find>
+      <find>rk4</find>
+      <find>25</find>
+      <find>Differential Corrections Method did not converge.</find>
+      <find>20</find>
+      <find>accu</find>
+      <find>accuracy</find>
+      <find>stepNumber</find>
+      <find>num</find>
+      <find>nu,</find>
+      <find>getNear</find>
+      <find>getNearest</find>
+      <find>r1</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -142,11 +133,15 @@
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_20.py" />
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_21.py" />
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_22.py" />
+        <option value="$USER_HOME$/Downloads/surface3d_demo.py" />
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
-        <option value="$PROJECT_DIR$/OrbitFamily.py" />
-        <option value="$PROJECT_DIR$/Utility.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_2.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_1.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_3.py" />
         <option value="$PROJECT_DIR$/Orbit.py" />
+        <option value="$PROJECT_DIR$/Utility.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/OrbitFamily.py" />
       </list>
     </option>
   </component>
@@ -160,7 +155,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -172,6 +166,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -180,7 +175,7 @@
     <property name="full.screen.before.presentation.mode" value="true" />
     <property name="last_opened_file_path" value="$USER_HOME$" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="application.passwordSafe" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -195,24 +190,6 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.main">
-    <configuration name="OrbitFamily" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="HaloPropagation" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/OrbitFamily.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="HaloPropagation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -249,7 +226,7 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
-    <configuration name="scratch_21" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="scratch_1" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="HaloPropagation" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -261,13 +238,13 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_21.py" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_1.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
-    <configuration name="scratch_22" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="scratch_2" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="HaloPropagation" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -279,7 +256,25 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_22.py" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <configuration name="scratch_3" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="HaloPropagation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_3.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -287,18 +282,18 @@
     </configuration>
     <list>
       <item itemvalue="Python.main" />
-      <item itemvalue="Python.scratch_21" />
-      <item itemvalue="Python.scratch_22" />
       <item itemvalue="Python.scratch" />
-      <item itemvalue="Python.OrbitFamily" />
+      <item itemvalue="Python.scratch_1" />
+      <item itemvalue="Python.scratch_2" />
+      <item itemvalue="Python.scratch_3" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.OrbitFamily" />
+        <item itemvalue="Python.scratch_3" />
+        <item itemvalue="Python.scratch_1" />
+        <item itemvalue="Python.scratch_2" />
         <item itemvalue="Python.scratch" />
-        <item itemvalue="Python.scratch_22" />
-        <item itemvalue="Python.scratch_21" />
       </list>
     </recent_temporary>
   </component>
@@ -312,14 +307,14 @@
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17712471" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.32937685" />
       <window_info anchor="bottom" id="Python Console" order="9" weight="0.32849604" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.39050132" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.41556728" />
       <window_info anchor="bottom" id="Inspection Results" order="7" weight="0.3298153" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -361,23 +356,10 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/library/utilities.py" />
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#110#128#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/library/calculation.py" />
-    <entry file="file://$PROJECT_DIR$/library/haloCalculation.py" />
-    <entry file="file://$PROJECT_DIR$/library/numMethods.py" />
-    <entry file="file://$PROJECT_DIR$/library/utilities.py" />
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
+        <state relative-caret-position="630">
+          <caret line="42" selection-start-line="42" selection-end-line="42" />
           <folding>
             <element signature="e#110#128#0" expanded="true" />
           </folding>
@@ -387,13 +369,6 @@
     <entry file="file://$PROJECT_DIR$/library/calculation.py" />
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_12.py" />
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_13.py" />
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/matplotlib/pyplot.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="157">
-          <caret line="253" selection-start-line="253" selection-end-line="253" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_14.py" />
     <entry file="file://$PROJECT_DIR$/library/numMethods.py" />
     <entry file="file://$PROJECT_DIR$/library/haloCalculation.py" />
@@ -460,21 +435,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/mpl_toolkits/mplot3d/axes3d.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36">
-          <caret line="1518" column="20" selection-start-line="1518" selection-start-column="20" selection-end-line="1518" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/scipy/integrate/odepack.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="265">
-          <caret line="214" selection-start-line="214" selection-end-line="214" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
     <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/os.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="144">
@@ -496,43 +456,98 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/OrbitFamily.py">
+    <entry file="file://$USER_HOME$/Downloads/surface3d_demo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3066">
-          <caret line="209" selection-start-line="209" selection-end-line="209" />
-          <folding>
-            <element signature="e#141#164#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="336">
+          <caret line="37" column="12" lean-forward="true" selection-start-line="37" selection-end-line="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="19" selection-start-line="19" selection-start-column="19" selection-end-line="19" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/matplotlib/pyplot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="112">
+          <caret line="697" column="38" lean-forward="true" selection-start-line="697" selection-start-column="38" selection-end-line="697" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="12" column="16" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_1.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="31" selection-start-line="3" selection-end-line="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/matplotlib/animation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="145">
+          <caret line="169" selection-start-line="169" selection-end-line="169" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/bambu/ffmpeg/__init__.py" />
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="40" lean-forward="true" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/mpl_toolkits/mplot3d/axes3d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="36">
+          <caret line="2225" selection-start-line="2225" selection-end-line="2225" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Utility.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="24">
-          <caret line="600" selection-start-line="600" selection-end-line="600" />
+        <state relative-caret-position="3855">
+          <caret line="261" selection-start-line="261" selection-end-line="261" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/site-packages/scipy/integrate/odepack.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="130">
+          <caret line="217" selection-start-line="217" selection-end-line="217" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="26" column="13" selection-start-line="26" selection-start-column="13" selection-end-line="26" selection-end-column="13" />
           <folding>
-            <element signature="e#102#120#0" expanded="true" />
+            <element signature="e#110#128#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Orbit.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="100" column="40" selection-start-line="100" selection-start-column="40" selection-end-line="100" selection-end-column="40" />
-          <folding>
-            <element signature="e#114#132#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="735">
+          <caret line="53" column="34" lean-forward="true" selection-start-line="53" selection-start-column="34" selection-end-line="53" selection-end-column="34" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$PROJECT_DIR$/OrbitFamily.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" selection-start-line="17" selection-end-line="17" />
-          <folding>
-            <element signature="e#110#128#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="382">
+          <caret line="132" column="23" lean-forward="true" selection-start-line="132" selection-start-column="23" selection-end-line="132" selection-end-column="23" />
         </state>
       </provider>
     </entry>

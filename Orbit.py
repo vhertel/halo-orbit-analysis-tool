@@ -17,9 +17,10 @@ import time
 # orbit class
 class Orbit:
 
-    accuracy = 1.0e-6
+    accuracy = 1.0e-8
     error = False
     dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
+
 
     # initializes by adapting input state to initial state of periodic halo orbits
     def __init__(self, x0, fixedValue, mu, stability=None, NRHO=None, comment="True"):
@@ -43,7 +44,8 @@ class Orbit:
         if comment:
             print("DONE")
 
-    def getNearestNRHO(self):
+
+    def getClosestNRHO(self):
         if Orbit.error == True:
             return
         # prints status update
@@ -73,15 +75,9 @@ class Orbit:
                 # calculates the null space vector of Jacobian matrix DF
                 nullSpace = Utility.nullspace(DF)
                 # declares and initializes the augmented free variable vector
-                contiFreeVariables = np.array([[x_n[0]],
-                                               [x_n[2]],
-                                               [x_n[4]],
-                                               [tau_n]])
+                contiFreeVariables = np.array([x_n[0], x_n[2], x_n[4], tau_n])
                 # declares and initializes the augmented constraints vector
-                contiConstraints = np.array([[xRef[2000, 1]],
-                                             [xRef[2000, 3]],
-                                             [xRef[2000, 5]],
-                                             [((contiFreeVariables - freeVariables).T).dot(nullSpace) + 0.05]])
+                contiConstraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5], ((contiFreeVariables - freeVariables).T).dot(nullSpace) + 0.01])
                 # calculates corrections to the initial state to meet a defined margin of error
                 GF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
@@ -89,9 +85,9 @@ class Orbit:
                                [nullSpace[0], nullSpace[1], nullSpace[2], nullSpace[3]]])
                 xIter = contiFreeVariables - (np.linalg.inv(GF)).dot(contiConstraints)
                 # sets the updated initial condition vector
-                x_n = np.array([xIter[0, 0], 0, xIter[1, 0], 0, xIter[2, 0], 0])
+                x_n = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
                 # sets T/2 of updated initial conditions
-                tau_n = xIter[3, 0]
+                tau_n = xIter[3]
                 # sets attributes
                 self.x0 = x_n
                 self.period = 2 * tau_n
@@ -99,12 +95,13 @@ class Orbit:
                 self.data = np.array([self.jacobi, self.period, x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]])
                 # updates stability index of orbit
                 Orbit.getStability(self)
-                print("        Current stability index: %8.4f" % (self.stability))
+                print("        Stability index: %8.4f" % (self.stability))
             print("\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
             x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
             print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n" % (
             tau_n, contiConstraints[0], contiConstraints[1], contiConstraints[2]))
         print("DONE")
+
 
     # calculates jacobi constant of orbit and sets result as attribute
     def getJacobi(self):
@@ -115,6 +112,7 @@ class Orbit:
         self.jacobi = -1 / 2 * (self.x0[3] ** 2 + self.x0[4] ** 2 + self.x0[5] ** 2) + 2 * (
                 1 / 2 * (self.x0[0] ** 2 + self.x0[1] ** 2)
                 + (1 - self.mu) / r1 + self.mu / r2)
+
 
     # calculates highest stability index of orbit and sets result as attribute
     def getStability(self):
@@ -131,11 +129,13 @@ class Orbit:
         else:
             self.NRHO = False
 
+
     # plots orbit
-    def plot(self, dataSet2=None, haloFamily="both", background="off"):
+    def plot(self, haloFamily="both", background="off", save=False):
         if Orbit.error == True:
             return
-        Plot.plot(np.array([self.data]), dataSet2, self.mu, Orbit.dict, haloFamily, background)
+        Plot.plot(np.array([self.data]), self.mu, Orbit.dict, haloFamily, background, save)
+
 
     # sets accuracy
     @classmethod
