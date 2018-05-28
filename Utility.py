@@ -1,7 +1,7 @@
 """
 File    : Utility.py
 Author  : Victor Hertel
-Date    : 24.04.2018
+Date    : 28.05.2018
 
 Utility classes
 """
@@ -16,6 +16,18 @@ mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
+class System:
+
+    def __init__(self, nameFP, massFP, nameSP, massSP, distance):
+
+        self.nameFP = nameFP
+        self.massFP = massFP
+        self.nameSP = nameSP
+        self.massSP = massSP
+        self.distance = distance
+        self.mu = self.massSP/(self.massFP + self.massSP)
+        self.G = 6.67408*1.0e-11
 
 
 
@@ -34,12 +46,10 @@ class NumericalMethods:
         if fixedValue is None and tau is not None:
             # declares and initializes constraint vector
             constraints = np.ones((3, 1))
-            # prints status update
-            #            print("        Differential Corrections Method for adaption of the initial state...")
             # declares and initializes counter for counting updates of initial state
             counter = 1
             # constraints are corrected until they meet a defined margin of error
-            while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon or abs(constraints[2]) > epsilon:
+            while max(abs(constraints)) > epsilon:
                 if counter > 10:
                     print("        Differential Corrections Method did not converge.")
                     raise ValueError
@@ -47,7 +57,7 @@ class NumericalMethods:
                     counter = counter + 1
                 # calculates the state transition matrix
                 phi = Utility.stm(x, tau, mu)
-                # integrates initial state from t0 to tau_n
+                # integrates initial state from t0 to tau
                 t = np.linspace(0, tau, num=200000)
                 xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
                 # calculates the derivation of the state at T/2
@@ -66,9 +76,6 @@ class NumericalMethods:
                 # sets T/2 of updated initial conditions
                 tau = xIter[3]
                 counter = counter + 1
-            # prints status update
-            #            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (counter, x[0], x[1], x[2], x[3], x[4], x[5]))
-            #            print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]" % (tau, constraints[0], constraints[1], constraints[2]))
             outX = x
             outTime = tau
             outData = np.array([outX, outTime, phi, xRef, xdot, freeVariables, DF])
@@ -84,9 +91,11 @@ class NumericalMethods:
                 tau = Utility.halfPeriod(x, mu, 1.0e-11)
             except ValueError:
                 raise ValueError
-
-            # declares and initializes constraint vector
-            constraints = np.ones((2, 1))
+            # integrates initial state from t0 to tau_n
+            t = np.linspace(0, tau, num=200000)
+            xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+            # declares and initializes the constraint vector with y, xdot and zdot
+            constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
             # declares and initializes counter
             counter = 0
 
@@ -472,82 +481,224 @@ class Plot:
         ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+    @staticmethod
+    def plot(data, system, dict, lagrangian):
+
+        orbits = None
+        orbitNumber = None
+        threed = None
+        background = None
+        xy = None
+        xz = None
+        yz = None
+        jacobi = None
+        period = None
+        stability = None
+        save = None
+
+        while orbits not in {"y", "n"}:
+            orbits = input("\nDo you want to plot the orbit(s)? (y/n)")
+        if orbits == "y":
+            orbits = True
+        else:
+            orbits = False
+        if orbits:
+            orbitNumber = input("  How many orbits do you want to plot? (all/number)")
+            if orbitNumber == "all":
+                orbitNumber = None
+            else:
+                orbitNumber = int(orbitNumber)
+            print("  Which projections should be plotted?")
+            while threed not in {"y", "n"}:
+                threed = input("  3d-perspective? (y/n)")
+            if threed == "y":
+                threed = True
+            else:
+                threed = False
+            if threed:
+                while background not in {"y", "n"}:
+                    background = input("    Do you want to plot the orbits with a coordinate frame? (y/n)")
+                if background == "y":
+                    background = False
+                else:
+                    background = True
+            while xy not in {"y", "n"}:
+                xy = input("  xy-perspective? (y/n)")
+            if xy == "y":
+                xy = True
+            else:
+                xy = False
+            while xz not in {"y", "n"}:
+                xz = input("  xz-perspective? (y/n)")
+            if xz == "y":
+                xz = True
+            else:
+                xz = False
+            while yz not in {"y", "n"}:
+                yz = input("  yz-perspective? (y/n)")
+            if yz == "y":
+                yz = True
+            else:
+                yz = False
+        while jacobi not in {"y", "n"}:
+            jacobi = input("Do you want to plot the Jacobi constant over the x-axis? (y/n)")
+        if jacobi == "y":
+            jacobi = True
+        else:
+            jacobi = False
+        while period not in {"y", "n"}:
+            period = input("Do you want to plot the period over the x-axis? (y/n)")
+        if period == "y":
+            period = True
+        else:
+            period = False
+        while stability not in {"y", "n"}:
+            stability = input("Do you want to plot the stability index over the x-axis? (y/n)")
+        if stability == "y":
+            stability = True
+        else:
+            stability = False
+        while save not in {"y", "n"}:
+            save = input("Do you want to save the generated plots? (y/n)")
+        if save == "y":
+            save = True
+        else:
+            save = False
+
+        if orbits:
+            if orbitNumber is None:
+                Plot.plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background)
+            else:
+                step = len(data)/(orbitNumber-1)
+                reducedData = data[0, :]
+                for i in range(orbitNumber-2):
+                    reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
+                reducedData = np.vstack([reducedData, data[-1, :]])
+                Plot.plotOrbit(reducedData, system, dict, lagrangian, threed, xz, yz, xy, save, background)
+        if jacobi:
+            Plot.plotJacobi(data, lagrangian, system, dict, save)
+        if period:
+            Plot.plotPeriod(data, lagrangian, system, dict, save)
+        if stability:
+            Plot.plotStability(data, lagrangian, system, dict, save)
+
 
     @staticmethod
-    def plot(data, mu, dict, haloFamily, background, save):
+    def plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background):
 
-        # prepares figure for plot
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-
-        # plots lagrangian points
-        lagrangian = Utility.lagrangianPosition(mu)
-        ax.scatter(lagrangian[0], 0, 0, color='blue', s=0.3, label='L1/L2')
-        ax.scatter(lagrangian[1], 0, 0, color='blue', s=0.3, label='L1/L2')
-
-        # plots second primary
-        #ax.scatter(-mu, 0, 0, color='blue', s = 3)
-        ax.scatter(1-mu, 0, 0, color='grey', s = 1, label='Moon')
-
+        lagrangianPosition = Utility.lagrangianPosition(system.mu)
         jacobiMax = max(data[:, 0])
         jacobiMin = min(data[:, 0])
 
-        # plots orbits
-        for i in range(len(data)):
+        normalize = mpl.colors.Normalize(vmin=jacobiMin, vmax=jacobiMax)
+        colormap = plt.cm.hsv_r
+        scalarmappaple = plt.cm.ScalarMappable(norm=normalize, cmap=colormap)
+        scalarmappaple.set_array(5)
 
+        if xy:
+            plt.figure(1)
+            plt.axis("equal")
+            cbar = plt.colorbar(scalarmappaple)
+            cbar.set_label("Jacobi Constant")
+            plt.title("%s - %s %s:   $xy$-Projection" % (system.nameFP, system.nameSP, lagrangian))
+            plt.xlabel("$x$ [m]")
+            plt.ylabel("$y$ [m]")
+            plt.scatter(lagrangianPosition[0] * system.distance, 0, color='blue', s=0.3)
+            plt.scatter(lagrangianPosition[1] * system.distance, 0, color='blue', s=0.3)
+            plt.scatter((1-system.mu) * system.distance, 0, color='grey', s=1)
+        if xz:
+            plt.figure(2)
+            plt.axis("equal")
+            cbar = plt.colorbar(scalarmappaple)
+            cbar.set_label("Jacobi Constant")
+            plt.title("%s - %s %s:   $xz$-Projection" % (system.nameFP, system.nameSP, lagrangian))
+            plt.xlabel("$x$ [m]")
+            plt.ylabel("$z$ [m]")
+            plt.scatter(lagrangianPosition[0] * system.distance, 0, color='blue', s=0.3)
+            plt.scatter(lagrangianPosition[1] * system.distance, 0, color='blue', s=0.3)
+            plt.scatter((1-system.mu) * system.distance, 0, color='grey', s=1)
+        if yz:
+            plt.figure(3)
+            plt.axis("equal")
+            cbar = plt.colorbar(scalarmappaple)
+            cbar.set_label("Jacobi Constant")
+            plt.title("%s - %s %s:   $yz$-Projection" % (system.nameFP, system.nameSP, lagrangian))
+            plt.xlabel("$y$ [m]")
+            plt.ylabel("$z$ [m]")
+            plt.scatter(0, 0, color='blue', s=0.3)
+            plt.scatter(0, 0, color='blue', s=0.3)
+            plt.scatter(0, 0, color='grey', s=1)
+        if threed:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            #plt.colorbar(scalarmappaple)
+            ax.scatter(lagrangianPosition[0] * system.distance, 0, 0, color='blue', s=0.3)
+            ax.scatter(lagrangianPosition[1] * system.distance, 0, 0, color='blue', s=0.3)
+            ax.scatter((1-system.mu) * system.distance, 0, 0, color='grey', s=1)
+
+        for i in range(len(data)):
             norm = (data[i,0] - jacobiMin) / (jacobiMax - jacobiMin)
             color = plt.cm.hsv_r(norm)
             t = np.linspace(0, data[i][1], num=10000)
-            halo = odeint(Utility.sysEquations, data[i][2:8], t, args=(mu,))
-            x = halo[:, 0]
-            y = halo[:, 1]
-            z = halo[:, 2]
-            if haloFamily == "northern":
-                ax.plot(x, y, -z, color=color, linewidth=0.25)
-            elif haloFamily == "southern":
+            halo = odeint(Utility.sysEquations, data[i][2:8], t, args=(system.mu,))
+            x = halo[:, 0] * system.distance
+            y = halo[:, 1] * system.distance
+            z = halo[:, 2] * system.distance
+            if xy:
+                plt.figure(1)
+                plt.plot(x, y, color=color, linewidth=0.25)
+            if xz:
+                plt.figure(2)
+                plt.plot(x, z, color=color, linewidth=0.25)
+            if yz:
+                plt.figure(3)
+                plt.plot(y, z, color=color, linewidth=0.25)
+            if threed:
                 ax.plot(x, y, z, color=color, linewidth=0.25)
-            elif haloFamily == "both":
-                ax.plot(x, y, z, color=color, linewidth=0.25)
-                ax.plot(x, y, -z, color=color, linewidth=0.25)
-            else:
-                print("Input of haloFamily is not supported.")
-                exit()
-            if background == "on":
+
+        if threed:
+            Plot.setAxesEqual(ax)
+            if background:
                 ax.patch.set_facecolor('black')
                 ax.set_axis_off()
-            elif background == "off":
-                ax.set_xlabel("x Axis")
-                ax.set_ylabel("y Axis")
-                ax.set_zlabel("z Axis")
             else:
-                print("Input of background is not supported.")
-
-        Plot.setAxesEqual(ax)
-        plt.show()
+                ax.set_xlabel("$x$ [m]")
+                ax.set_ylabel("$y$ [m]")
+                ax.set_zlabel("$z$ [m]")
 
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
-            print("\nSaving plots..")
-            numOfFigures = 100
-            theta = np.linspace(0, 2*np.pi, numOfFigures)
-            for i in range(0, numOfFigures, 1):
-                 ax.view_init(0, i*(360/numOfFigures) + 270)
-                 fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=400, bbox_inches = 'tight')
-            print("DONE")
+            if xy:
+                plt.figure(1)
+                plt.savefig(dict + "plots/xy_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+            if xz:
+                plt.figure(2)
+                plt.savefig(dict + "plots/xz_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+            if yz:
+                plt.figure(3)
+                plt.savefig(dict + "plots/yz_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+            if threed:
+                numOfFigures = 100
+                for i in range(0, numOfFigures, 1):
+                     ax.view_init(0, i*(360/numOfFigures) + 270)
+                     fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=400, bbox_inches = 'tight')
+
+        plt.show()
+
 
 
     @staticmethod
-    def plotJacobi(data, dict, save):
-        plt.title("Earth - Moon L1/L2")
-        plt.xlabel("x-Axis")
+    def plotJacobi(data, lagrangian, system, dict, save):
+        plt.title("%s - %s %s" % (system.nameFP, system.nameSP, lagrangian))
+        plt.xlabel("$x$ [m]")
         plt.ylabel("Jacobi Constant")
         for element in data:
             if element[2] > 1:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2], element[0], s=0.5, color=color)
+            plt.scatter(element[2]*system.distance, element[0], s=0.5, color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
@@ -556,16 +707,22 @@ class Plot:
 
 
     @staticmethod
-    def plotPeriod(data, dict, save):
-        plt.title("Earth - Moon L1/L2")
-        plt.xlabel("x-Axis")
-        plt.ylabel("Period")
+    def plotPeriod(data, lagrangian, system, dict, save):
+
+        distance = system.distance
+        G = system.G
+        massFP = system.massFP
+        massSP = system.massSP
+
+        plt.title("%s - %s %s" % (system.nameFP, system.nameSP, lagrangian))
+        plt.xlabel("$x$ [m]")
+        plt.ylabel("Period [Days]")
         for element in data:
             if element[2] > 1:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2], element[1], s=0.5, color=color)
+            plt.scatter(element[2]*system.distance, (element[1]*np.sqrt(distance**3/(G*(massFP+massSP))))/(60*60*24), s=0.5, color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
@@ -574,12 +731,12 @@ class Plot:
 
 
     @staticmethod
-    def plotStability(data, mu, dict, save):
-        plt.title("Earth - Moon L1/L2")
-        plt.xlabel("x-Axis")
+    def plotStability(data, lagrangian, system, dict, save):
+        plt.title("%s - %s %s" % (system.nameFP, system.nameSP, lagrangian))
+        plt.xlabel("$x$ [m]")
         plt.ylabel("Stability Index")
         for element in data:
-            monodromy = Utility.stm(element[2:8], element[1], mu)
+            monodromy = Utility.stm(element[2:8], element[1], system.mu)
             eigenvalues, eigenvectors = np.linalg.eig(monodromy)
             maximum = max(abs(eigenvalues))
             stability = 1 / 2 * (maximum + 1 / maximum)
@@ -587,7 +744,7 @@ class Plot:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2], stability, s=0.5, color=color)
+            plt.scatter(element[2]*system.distance, stability, s=0.5, color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
@@ -596,49 +753,60 @@ class Plot:
 
 
     @staticmethod
-    def plotFromTable(folder, jacobi=False, period=False, stability=False, orbits=False, orbitNumber=None, haloFamily="both", background="off", save=False):
+    def plotFromTable(folder):
 
         table = open("Output/" + folder + "/data.txt", "r")
         for lines in table:
-
-            if "MASS RATIO" in lines:
-                line = lines.split()
-                mu = float(line[3])
+            line = lines.split()
+            if "NAME FIRST PRIMARY" in lines:
+                nameFP = line[4]
+            if "MASS FIRST PRIMARY" in lines:
+                massFP = float(line[4])
+            if "NAME SECOND PRIMARY" in lines:
+                nameSP = line[4]
+            if "MASS SECOND PRIMARY" in lines:
+                massSP = float(line[4])
+            if "PRIMARY DISTANCE" in lines:
+                distance = float(line[3])
+            if "LAGRANGIAN" in lines:
+                lagrangian = line[2]
             if "ORBIT NUMBER" in lines:
-                line = lines.split()
                 number = int(line[3])
+
             if "DATA_START" in lines:
-                for i in range(4):
+                for i in range(2):
                     line = table.readline()
                 words = line.split()
                 for i in range(3):
                     words.insert(2*i + 3, 0)
                 data = words
-                while line != "\n":
+                while "DATA_STOP" not in line:
                     words = line.split()
                     for i in range(3):
                         words.insert(2*i + 3, 0)
                     data = np.vstack([data, words])
                     line = table.readline()
-
                 data = data.astype(np.float)
         table.close()
 
+        system = System(nameFP, massFP, nameSP, massSP, distance)
         dict = "Output/" + folder + "/"
 
-        if jacobi:
-            Plot.plotJacobi(data, dict, save)
-        if period:
-            Plot.plotPeriod(data, dict, save)
-        if stability:
-            Plot.plotStability(data, mu, dict, save)
-        if orbits:
-            if orbitNumber is None:
-                Plot.plot(data, mu, dict=dict, haloFamily=haloFamily, background=background, save=save)
-            else:
-                step = number/(orbitNumber-1)
-                reducedData = data[0, :]
-                for i in range(orbitNumber-2):
-                    reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
-                reducedData = np.vstack([reducedData, data[-1, :]])
-                Plot.plot(reducedData, mu, dict=dict, haloFamily=haloFamily, background=background, save=save)
+        Plot.plot(data, system, dict, lagrangian)
+
+        # if jacobi:
+        #     Plot.plotJacobi(data, lagrangian, system, dict, save)
+        # if period:
+        #     Plot.plotPeriod(data, lagrangian, system, dict, save)
+        # if stability:
+        #     Plot.plotStability(data, lagrangian, system, dict, save)
+        # if orbits:
+        #     if orbitNumber is None:
+        #         Plot.plot(data, system, dict=dict, projection=projection, background=background, save=save)
+        #     else:
+        #         step = number/(orbitNumber-1)
+        #         reducedData = data[0, :]
+        #         for i in range(orbitNumber-2):
+        #             reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
+        #         reducedData = np.vstack([reducedData, data[-1, :]])
+        #         Plot.plot(reducedData, system, dict=dict, lagrangian=lagrangian, projection=projection, background=background, save=save)

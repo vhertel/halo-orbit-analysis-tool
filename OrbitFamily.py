@@ -1,7 +1,7 @@
 """
 File    : OrbitFamily.py
 Author  : Victor Hertel
-Date    : 24.04.2018
+Date    : 28.05.2018
 
 OrbitFamily Class and L1Family/L2Family Subclasses
 """
@@ -20,12 +20,12 @@ class OrbitFamily:
 
     dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
-    def __init__(self, x0, orbitDistance, orbitNumber, mu, familyData=None):
+    def __init__(self, x0, orbitDistance, system, orbitNumber=None):
         self.x0 = x0
-        self.mu = mu
         self.orbitDistance = orbitDistance
+        self.system = system
         self.orbitNumber = orbitNumber
-        self.familyData = familyData
+        self.familyData = None
         if x0[0] < 1:
             self.lagrangian = "L1"
         elif x0[0] > 1:
@@ -35,16 +35,19 @@ class OrbitFamily:
             self.lagrangian = None
 
     def getHaloFamily(self):
+        if self.orbitNumber is None:
+            print("Orbit Number is not given.")
+            exit()
         # prints status update
         print("STATUS: Generation of a family of %d Halo Orbits around %s...\n" % (self.orbitNumber, self.lagrangian))
         OrbitContinuation.natParaConti(self)
         print("DONE")
 
     def getNRHOFamily(self):
-        orbit = Orbit(self.x0, "z", self.mu)
+        orbit = Orbit(self.x0, "z", self.system)
         orbit.getClosestNRHO()
         self.x0 = orbit.x0
-        OrbitContinuation.natParaConti(self)
+        OrbitContinuation.natParaConti(self, NRHOFamily=True)
 
     def writeData(self):
         if self.familyData is None:
@@ -54,45 +57,37 @@ class OrbitFamily:
         if not os.path.exists(OrbitFamily.dict):
             os.makedirs(OrbitFamily.dict)
         output = open(OrbitFamily.dict + "data.txt", "w")
-        output.write("CREATION_DATE        =      " + time.strftime("%Y-%m-%dT%H:%M:%S") + "\n"
-                     "ORIGINATOR           =      ASTOS SOLUTIONS GMBH\n\n")
+        output.write("CREATION_DATE            =      " + time.strftime("%Y-%m-%dT%H:%M:%S") + "\n"
+                     "ORIGINATOR               =      ASTOS SOLUTIONS GMBH\n\n")
         output.write("META_START\n"
-                     "LAGRANGIAN           =      %s\n"
-                     "ORBIT NUMBER         =      %d\n"
-                     "ORBIT DISTANCE       =      %f\n"
-                     "MASS RATIO           =      %11.10f\n"
-                     "META_STOP\n\n" % (self.lagrangian, self.orbitNumber, self.orbitDistance, self.mu))
-        output.write("DATA_START\n\n")
-        output.write("        JC           Period           x              z            dy/dt\n\n")
+                     "NAME FIRST PRIMARY       =      %s\n"
+                     "MASS FIRST PRIMARY       =      %e\n"
+                     "NAME SECOND PRIMARY      =      %s\n"
+                     "MASS SECOND PRIMARY      =      %e\n"
+                     "PRIMARY DISTANCE         =      %e\n"
+                     "MASS RATIO               =      %11.10f\n"
+                     "LAGRANGIAN               =      %s\n"
+                     "ORBIT NUMBER             =      %d\n"
+                     "ORBIT DISTANCE           =      %f\n"
+                     "META_STOP\n\n" % (self.system.nameFP, self.system.massFP, self.system.nameSP, self.system.massSP,
+                                        self.system.distance, self.system.mu, self.lagrangian, self.orbitNumber, self.orbitDistance))
+        output.write("DATA_START\n")
+        output.write("        JC           Period           x              z            dy/dt\n")
         for orbit in self.familyData:
             output.write('{0:15.10f}'.format(orbit[0]))
             output.write('{0:15.10f}'.format(orbit[1]))
             output.write('{0:15.10f}'.format(orbit[2]))
             output.write('{0:15.10f}'.format(orbit[4]))
             output.write('{0:15.10f}\n'.format(orbit[6]))
-        output.write("\nDATA_STOP")
+        output.write("DATA_STOP")
         output.close()
 
-    def plot(self, haloFamily="both", background="off", save=False):
+    def plot(self):
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
-        Plot.plot(self.familyData, self.mu, OrbitFamily.dict, haloFamily, background, save)
-
-    def plotJacobi(self):
-        if self.familyData is None:
-            print("        No data has been calculated yet\n"
-                  "DONE")
-            return
-        Plot.plotJacobi(self.familyData, OrbitFamily.dict)
-
-    def plotPeriod(self):
-        if self.familyData is None:
-            print("        No data has been calculated yet\n"
-                  "DONE")
-            return
-        Plot.plotPeriod(self.familyData, OrbitFamily.dict)
+        Plot.plot(self.familyData, self.system, OrbitFamily.dict, self.lagrangian)
 
 
 
@@ -128,13 +123,13 @@ class OrbitContinuation:
     #                   Input possibilities: {"northern", "southern", "both"}
     # --------------------------------------------------------------------------
     @staticmethod
-    def natParaConti(family):
+    def natParaConti(family, NRHOFamily=False):
         # calculates first two orbits
         x_n = family.x0
-        print("        Orbit Number: 1    (fixed z-value)\n")
+        print("        Orbit Number: 1    (fixed z-value)")
         for i in range(2):
-            orbit = Orbit(x_n, "z", family.mu, comment=False)
-            if Orbit.error == True:
+            orbit = Orbit(x_n, "z", family.system, comment=False)
+            if Orbit.error is True:
                 family.orbitNumber = len(output)
                 family.familyData = output
                 return
@@ -143,16 +138,19 @@ class OrbitContinuation:
                 orbit.getJacobi()
                 output = orbit.data
                 x_n = outX - np.array([0, 0, 0.0001, 0, 0, 0])
+                print("        Reference Orbit:")
             else:
                 lastX = orbit.x0
 
-        # loops through number of additional orbits
-        for i in range(family.orbitNumber-1):
+        stopLoop = False
+        i = 0
 
+        while not stopLoop:
+        # loops through number of additional orbits
             # checks whether x- or z-value has changed more since last iteration
             if abs(lastX[0] - outX[0]) > abs(lastX[2] - outX[2]):
                 # x-value changed more than z-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed x-value)\n" % (i + 2))
+                print("        Orbit Number: %2d    (fixed x-value)" % (i + 2))
                 dz = abs(outX[2] - lastX[2])
                 stepSize = np.sqrt(family.orbitDistance**2 - dz**2)
                 if math.isnan(stepSize):
@@ -166,8 +164,8 @@ class OrbitContinuation:
                     print("Lagrangian type not supported.")
                     exit()
                 # calculates initial state
-                orbit = Orbit(x_n, "x", family.mu, comment=False)
-                if Orbit.error == True:
+                orbit = Orbit(x_n, "x", family.system, comment=False)
+                if Orbit.error is True:
                     family.orbitNumber = len(output)
                     family.familyData = output
                     return
@@ -178,7 +176,7 @@ class OrbitContinuation:
 
             else:
                 # z-value changed more than x-value and needs to be fixed
-                print("        Orbit Number: %2d    (fixed z-value)\n" % (i + 2))
+                print("        Orbit Number: %2d    (fixed z-value)" % (i + 2))
                 dx = abs(outX[0] - lastX[0])
                 stepSize = np.sqrt(family.orbitDistance ** 2 - dx ** 2)
                 if math.isnan(stepSize):
@@ -192,8 +190,8 @@ class OrbitContinuation:
                     print("Lagrangian type not supported.")
                     exit()
                 # calculates initial state
-                orbit = Orbit(x_n, "z", family.mu, comment=False)
-                if Orbit.error == True:
+                orbit = Orbit(x_n, "z", family.system, comment=False)
+                if Orbit.error is True:
                     family.orbitNumber = len(output)
                     family.familyData = output
                     return
@@ -201,6 +199,17 @@ class OrbitContinuation:
                 lastX = outX
                 outX = orbit.x0
                 output = np.vstack([output, orbit.data])
+
+            if NRHOFamily is True:
+                orbit.getStability()
+                print(orbit.stability)
+                if not orbit.NRHO:
+                    stopLoop = True
+            else:
+                if i == (family.orbitNumber-2):
+                    stopLoop=True
+
+            i += 1
 
         family.familyData = output
         return
