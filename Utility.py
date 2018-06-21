@@ -15,34 +15,35 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
+import imageio
 
 class System:
 
+    # class including dynaical system
     def __init__(self, nameFP, massFP, nameSP, massSP, distance):
-
+        # name of first primary
         self.nameFP = nameFP
+        # mass of first primary
         self.massFP = massFP
+        # name of second primary
         self.nameSP = nameSP
+        # mass of second primary
         self.massSP = massSP
+        # distance between primaries
         self.distance = distance
-        self.mu = self.massSP/(self.massFP + self.massSP)
-        self.G = 6.67408*1.0e-11
-
-
+        # mass ratio
+        self.mu = self.massSP / (self.massFP + self.massSP)
+        # gravitational constant
+        self.G = 6.67408 * 1.0e-11
 
 
 class NumericalMethods:
 
-    # --------------------------------------------------------------------------
-    # DIFFERENTIAL CORRECTIONS METHOD
-    #
-    #
-    # --------------------------------------------------------------------------
-
+    # differential corrections method
     @staticmethod
     def diffCorrections(x, mu, epsilon, tau=None, fixedValue=None):
 
+        # time variable differential corrections method with no fixed value
         if fixedValue is None and tau is not None:
             # declares and initializes constraint vector
             constraints = np.ones((3, 1))
@@ -57,7 +58,7 @@ class NumericalMethods:
                     counter = counter + 1
                 # calculates the state transition matrix
                 phi = Utility.stm(x, tau, mu)
-                # integrates initial state from t0 to tau
+                # integrates initial state from 0 to tau
                 t = np.linspace(0, tau, num=200000)
                 xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
                 # calculates the derivation of the state at T/2
@@ -70,34 +71,39 @@ class NumericalMethods:
                 DF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
                                [phi[5, 0], phi[5, 2], phi[5, 4], xdot[5]]])
-                xIter = freeVariables - ((DF.T).dot(np.linalg.inv(DF.dot(DF.T)))).dot(constraints)
+                xIter = freeVariables - (DF.T.dot(np.linalg.inv(DF.dot(DF.T)))).dot(constraints)
                 # sets the updated initial condition vector
                 x = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
                 # sets T/2 of updated initial conditions
                 tau = xIter[3]
                 counter = counter + 1
+            # stores initial state
             outX = x
+            # stores period
             outTime = tau
+            # output data includes STM and others for pseudo-arclength continuation
             outData = np.array([outX, outTime, phi, xRef, xdot, freeVariables, DF])
 
             return outData
 
-
+        # differential corrections method with one fixed value
         elif fixedValue is not None and tau is None:
-
+            # prints status update
             print("        Differential Corrections Method for adaption of the initial state...")
             # calculates T/2 by integrating until y changes sign
             try:
                 tau = Utility.halfPeriod(x, mu, 1.0e-11)
             except ValueError:
                 raise ValueError
-            # integrates initial state from t0 to tau_n
+            # integrates initial state from 0 to tau
             t = np.linspace(0, tau, num=200000)
             xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
             # declares and initializes the constraint vector with y, xdot and zdot
             constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
             # declares and initializes counter
             counter = 0
+            outX = x
+            outTime = tau
 
             # case of x-amplitude being the fixed variable
             if fixedValue == "x":
@@ -167,7 +173,7 @@ class NumericalMethods:
                     outX = x
                     outTime = tau
 
-            # stores the initial condition and T/2 in output vector
+            # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
             # prints status updates
             print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
@@ -182,26 +188,16 @@ class NumericalMethods:
             print("Input parameters not correct.")
 
 
-
 class Utility:
 
-    # --------------------------------------------------------------------------
-    # CALCULATING MATRIX A
+    """
+    # A Taylor series expansion retaining only first-order terms is used to
+    # linearize the nonlinear system equations of motion. With the six-dimensional
+    # state vector x = [x, y, z, vx, vy, vz]^T, this system of three second-order
+    # differential equations can be written in state space form as
     #
-    # DESCRIPTION:      A Taylor series expansion retaining only first-order terms is used to
-    #                   linearize the nonlinear system equations of motion. With the six-dimensional
-    #                   state vector x = [x, y, z, vx, vy, vz]^T, this system of three second-order
-    #                   differential equations can be written in state space form as
-    #
-    #                        dx/dt = A(t) * x(t)
-    #
-    # OUTPUT:           Output is the 6x6 matrix A(t)
-    #
-    # SYNTAX:           AMatrix(x, mu)
-    # x             =   Position values of state vector
-    # mu            =   Mass ratio of Primaries
-    # --------------------------------------------------------------------------
-
+    #      dx/dt = A(t) * x(t)
+    """
     @staticmethod
     def AMatrix(x, mu):
 
@@ -213,17 +209,17 @@ class Utility:
         r1 = np.sqrt((x[0] + mu) ** 2 + x[1] ** 2 + x[2] ** 2)
         r2 = np.sqrt((x[0] - (1 - mu)) ** 2 + x[1] ** 2 + x[2] ** 2)
         # calculates the elements of the second partial derivatives of the three-body pseudo-potential U
-        Uxx = 1 - (1 - mu) / (r1 ** 3) - (mu) / (r2 ** 3) + (3 * (1 - mu) * (x[0] + mu) ** 2) / (r1 ** 5) + (
+        Uxx = 1 - (1 - mu) / (r1 ** 3) - mu / (r2 ** 3) + (3 * (1 - mu) * (x[0] + mu) ** 2) / (r1 ** 5) + (
                 3 * mu * (x[0] - (1 - mu)) ** 2) / (r2 ** 5)
         Uxy = (3 * (1 - mu) * (x[0] + mu) * x[1]) / (r1 ** 5) + (3 * mu * (x[0] - (1 - mu)) * x[1]) / (r2 ** 5)
         Uxz = (3 * (1 - mu) * (x[0] + mu) * x[2]) / (r1 ** 5) + (3 * mu * (x[0] - (1 - mu)) * x[2]) / (r2 ** 5)
         Uyx = Uxy
-        Uyy = 1 - (1 - mu) / (r1 ** 3) - (mu) / (r2 ** 3) + (3 * (1 - mu) * x[1] ** 2) / (r1 ** 5) + (
+        Uyy = 1 - (1 - mu) / (r1 ** 3) - mu / (r2 ** 3) + (3 * (1 - mu) * x[1] ** 2) / (r1 ** 5) + (
                 3 * mu * x[1] ** 2) / (r2 ** 5)
         Uyz = (3 * (1 - mu) * x[1] * x[2]) / (r1 ** 5) + (3 * mu * x[1] * x[2]) / (r2 ** 5)
         Uzx = Uxz
         Uzy = Uyz
-        Uzz = - (1 - mu) / (r1 ** 3) - (mu) / (r2 ** 3) + (3 * (1 - mu) * x[2] ** 2) / (r1 ** 5) + (
+        Uzz = - (1 - mu) / (r1 ** 3) - mu / (r2 ** 3) + (3 * (1 - mu) * x[2] ** 2) / (r1 ** 5) + (
                 3 * mu * x[2] ** 2) / (r2 ** 5)
         # declares and fills 3x3 submatrix U
         U = np.array([[Uxx, Uxy, Uxz],
@@ -239,7 +235,8 @@ class Utility:
 
         return A
 
-    # --------------------------------------------------------------------------
+
+    """
     # CALCULATING SYSTEMS OF EQUATIONS
     #
     # DESCRIPTION:      Function deals with the equations of motion comprising the dynamical model of the CR3BP.
@@ -259,13 +256,7 @@ class Utility:
     #                               Vector with 42 elements including the result of the matrix multiplication
     #                               dPhi(t,0)/dt = A(t) * Phi(t,0) as the first 36 values and the six
     #                               dimensional state vector dx/dt as the last 6 elements
-    #
-    # SYNTAX:           sysEquations(y, mu, t="0")
-    # y             =   Position values of state vector
-    # mu            =   Mass ratio of Primaries
-    # t="0"         =   Parameter is only used for numerical integration with rk4System()
-    # --------------------------------------------------------------------------
-
+    """
     @staticmethod
     def sysEquations(y, t, mu):
 
@@ -297,14 +288,14 @@ class Utility:
                              y[37] - 2 * y[39] - ((1 - mu) * y[37]) / (r1 ** 3) - (mu * y[37]) / (r2 ** 3),
                              - ((1 - mu) * y[38]) / (r1 ** 3) - (mu * y[38]) / (r2 ** 3)])
 
-            APhi = np.concatenate((a,ydot))
+            APhi = np.concatenate((a, ydot))
 
             return APhi
 
         elif len(y) == 6:
             # calculates r1, r2 and the state vector dx/dt = [dx/dt, dy/dt, dz/dt, dvx/dt, dvy/dt, dvz/dt]^T
-            r1 = np.sqrt((y[0] + mu) ** 2 + y[1] ** 2 + y[2] ** 2)
-            r2 = np.sqrt((y[0] - (1 - mu)) ** 2 + y[1] ** 2 + y[2] ** 2)
+            r1 = np.sqrt((y[0] + mu)** 2 + y[1]** 2 + y[2]** 2)
+            r2 = np.sqrt((y[0] - (1 - mu))** 2 + y[1]** 2 + y[2]** 2)
             ydot = np.array([y[3],
                              y[4],
                              y[5],
@@ -318,7 +309,24 @@ class Utility:
         else:
             print("Dimension of input parameter y is not supported.")
 
-    # --------------------------------------------------------------------------
+
+    @staticmethod
+    def backwards(y, t, mu):
+        # calculates r1, r2 and the state vector dx/dt = [dx/dt, dy/dt, dz/dt, dvx/dt, dvy/dt, dvz/dt]^T
+        r1 = np.sqrt((y[0] + mu)** 2 + y[1]** 2 + y[2]** 2)
+        r2 = np.sqrt((y[0] - (1 - mu))** 2 + y[1]** 2 + y[2]** 2)
+        ydot = np.array([- y[3],
+                         - y[4],
+                         - y[5],
+                         - (y[0] + 2 * y[4] - ((1 - mu) * (y[0] + mu)) / (r1 ** 3) - (mu * (y[0] - (1 - mu))) / (
+                                 r2 ** 3)),
+                         - (y[1] - 2 * y[3] - ((1 - mu) * y[1]) / (r1 ** 3) - (mu * y[1]) / (r2 ** 3)),
+                         - (- ((1 - mu) * y[2]) / (r1 ** 3) - (mu * y[2]) / (r2 ** 3))])
+
+        return ydot
+
+
+    """
     # STATE TRANSITION MATRIX
     #
     # DESCRIPTION:      The State Transition Matrix (STM) is a linear map from the initial state
@@ -332,13 +340,7 @@ class Utility:
     #                        Phi(t,0) = I6
     #
     # OUTPUT:           Output is the 6x6 State Transition Matrix
-    #
-    # SYNTAX:           stm(x, tf, mu)
-    # x             =   Initial State Guess
-    # tf            =   Final time
-    # mu            =   Mass ratio of Primaries
-    # --------------------------------------------------------------------------
-
+    """
     @staticmethod
     def stm(x, tf, mu):
 
@@ -364,7 +366,8 @@ class Utility:
 
         return phi
 
-    # --------------------------------------------------------------------------
+
+    """
     # HALF PERIOD
     #
     # DESCRIPTION:      The equations of motion are integrated until y changes sign. Then the step
@@ -377,8 +380,7 @@ class Utility:
     # x0            =   Initial State
     # mu            =   Mass ratio of Primaries
     # epsilon       =   Error Tolerance
-    # --------------------------------------------------------------------------
-
+    """
     @staticmethod
     def halfPeriod(x0, mu, epsilon):
         # declares and initializes actual state x and state at half period xHalfPeriod
@@ -406,7 +408,7 @@ class Utility:
                     t = np.linspace(0, timeStep, num=10000)
                     Y = odeint(Utility.sysEquations, x0, t, args=(mu,))
                     x = Y[-1, :]
-                    #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    # print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
             else:
                 while x[1] < 0:
                     if timeStep > 2:
@@ -417,7 +419,7 @@ class Utility:
                     t = np.linspace(0, timeStep, num=10000)
                     Y = odeint(Utility.sysEquations, x0, t, args=(mu,))
                     x = Y[-1, :]
-                    #print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
+                    # print("y = %10.8e at t = %10.8e" % (xHalfPeriod[1], timeStep))
 
             # last point before change of sign is defined as starting point for next iteration
             timeStep = timeStep - stepSize
@@ -432,19 +434,20 @@ class Utility:
 
         return tHalfPeriod
 
-
     @staticmethod
     def lagrangianPosition(mu):
         # L1
-        l = 1-mu
-        p_L1= np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)+mu-l, mu**2*l**2+2*(l**2+mu**2), mu**3-l**3])
+        l = 1 - mu
+        p_L1 = np.array([1, 2 * (mu - l), l ** 2 - 4 * l * mu + mu ** 2, 2 * mu * l * (l - mu) + mu - l,
+                         mu ** 2 * l ** 2 + 2 * (l ** 2 + mu ** 2), mu ** 3 - l ** 3])
         L1roots = np.roots(p_L1)
         for i in range(5):
-            if L1roots[i] > - mu and L1roots[i] < l:
+            if - mu < L1roots[i] < l:
                 L1 = np.real(L1roots[i])
         # L2
-        p_L2 = np.array([1, 2*(mu-l), l**2-4*l*mu+mu**2, 2*mu*l*(l-mu)-(mu+l), mu**2*l**2+2*(l**2-mu**2), -(mu**3+l**3)])
-        L2roots=np.roots(p_L2)
+        p_L2 = np.array([1, 2 * (mu - l), l ** 2 - 4 * l * mu + mu ** 2, 2 * mu * l * (l - mu) - (mu + l),
+                         mu ** 2 * l ** 2 + 2 * (l ** 2 - mu ** 2), -(mu ** 3 + l ** 3)])
+        L2roots = np.roots(p_L2)
         for i in range(5):
             if L2roots[i] > - mu and L2roots[i] > l:
                 L2 = np.real(L2roots[i])
@@ -459,8 +462,6 @@ class Utility:
         nnz = (s >= tol).sum()
         ns = vh[nnz:].conj().T
         return ns
-
-
 
 
 class Plot:
@@ -481,9 +482,9 @@ class Plot:
         ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+
     @staticmethod
     def plot(data, system, dict, lagrangian):
-
         orbits = None
         orbitNumber = None
         threed = None
@@ -495,6 +496,7 @@ class Plot:
         period = None
         stability = None
         save = None
+        gif = None
 
         while orbits not in {"y", "n"}:
             orbits = input("\nDo you want to plot the orbit(s)? (y/n)")
@@ -564,27 +566,40 @@ class Plot:
             save = True
         else:
             save = False
-
-        if orbits:
-            if orbitNumber is None:
-                Plot.plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background)
+        if save and orbits and threed:
+            while gif not in {"y", "n"}:
+                gif = input("Do you want to save an animation of the orbits? (y/n)")
+            if gif == "y":
+                gif = True
             else:
-                step = len(data)/(orbitNumber-1)
+                gif = False
+
+        print("\nSTATUS: Preparing figures...")
+        if orbits:
+            print("        Orbits...   ")
+            if orbitNumber is None:
+                Plot.plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background, gif)
+            else:
+                step = len(data) / (orbitNumber - 1)
                 reducedData = data[0, :]
-                for i in range(orbitNumber-2):
-                    reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
+                for i in range(orbitNumber - 2):
+                    reducedData = np.vstack([reducedData, data[round(step * (i + 1)), :]])
                 reducedData = np.vstack([reducedData, data[-1, :]])
-                Plot.plotOrbit(reducedData, system, dict, lagrangian, threed, xz, yz, xy, save, background)
+                Plot.plotOrbit(reducedData, system, dict, lagrangian, threed, xz, yz, xy, save, background, gif)
         if jacobi:
+            print("        Jacobi...   ")
             Plot.plotJacobi(data, lagrangian, system, dict, save)
         if period:
+            print("        Period...   ")
             Plot.plotPeriod(data, lagrangian, system, dict, save)
         if stability:
+            print("        Stability...   ")
             Plot.plotStability(data, lagrangian, system, dict, save)
+        print("DONE")
 
 
     @staticmethod
-    def plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background):
+    def plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background, gif):
 
         lagrangianPosition = Utility.lagrangianPosition(system.mu)
         jacobiMax = max(data[:, 0])
@@ -605,7 +620,7 @@ class Plot:
             plt.ylabel("$y$ [m]")
             plt.scatter(lagrangianPosition[0] * system.distance, 0, color='blue', s=0.3)
             plt.scatter(lagrangianPosition[1] * system.distance, 0, color='blue', s=0.3)
-            plt.scatter((1-system.mu) * system.distance, 0, color='grey', s=1)
+            plt.scatter((1 - system.mu) * system.distance, 0, color='grey', s=1)
         if xz:
             plt.figure(2)
             plt.axis("equal")
@@ -616,7 +631,7 @@ class Plot:
             plt.ylabel("$z$ [m]")
             plt.scatter(lagrangianPosition[0] * system.distance, 0, color='blue', s=0.3)
             plt.scatter(lagrangianPosition[1] * system.distance, 0, color='blue', s=0.3)
-            plt.scatter((1-system.mu) * system.distance, 0, color='grey', s=1)
+            plt.scatter((1 - system.mu) * system.distance, 0, color='grey', s=1)
         if yz:
             plt.figure(3)
             plt.axis("equal")
@@ -631,13 +646,14 @@ class Plot:
         if threed:
             fig = plt.figure()
             ax = fig.gca(projection='3d')
-            #plt.colorbar(scalarmappaple)
-            ax.scatter(lagrangianPosition[0] * system.distance, 0, 0, color='blue', s=0.3)
+            # plt.colorbar(scalarmappaple)
+            ax.scatter((1 - system.mu) * system.distance, 0, 0, color='grey', s=1, label="Moon")
+            ax.scatter(lagrangianPosition[0] * system.distance, 0, 0, color='blue', s=0.3, label="L1/L2")
             ax.scatter(lagrangianPosition[1] * system.distance, 0, 0, color='blue', s=0.3)
-            ax.scatter((1-system.mu) * system.distance, 0, 0, color='grey', s=1)
+            #ax.legend(loc="center right", prop={'size': 6})
 
         for i in range(len(data)):
-            norm = (data[i,0] - jacobiMin) / (jacobiMax - jacobiMin)
+            norm = (data[i, 0] - jacobiMin) / (jacobiMax - jacobiMin)
             color = plt.cm.hsv_r(norm)
             t = np.linspace(0, data[i][1], num=10000)
             halo = odeint(Utility.sysEquations, data[i][2:8], t, args=(system.mu,))
@@ -671,21 +687,28 @@ class Plot:
                 os.makedirs(dict + "plots")
             if xy:
                 plt.figure(1)
-                plt.savefig(dict + "plots/xy_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+                plt.savefig(dict + "plots/xy_proj.pdf", format='pdf', dpi=400, bbox_inches='tight')
             if xz:
                 plt.figure(2)
-                plt.savefig(dict + "plots/xz_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+                plt.savefig(dict + "plots/xz_proj.pdf", format='pdf', dpi=400, bbox_inches='tight')
             if yz:
                 plt.figure(3)
-                plt.savefig(dict + "plots/yz_proj.pdf", format='pdf', dpi=400, bbox_inches = 'tight')
+                plt.savefig(dict + "plots/yz_proj.pdf", format='pdf', dpi=400, bbox_inches='tight')
             if threed:
-                numOfFigures = 100
-                for i in range(0, numOfFigures, 1):
-                     ax.view_init(0, i*(360/numOfFigures) + 270)
-                     fig.savefig(dict + "plots/fig%d.pdf" % (i), format='pdf', dpi=400, bbox_inches = 'tight')
+                images = []
+                numOfFigures = 150
+                thetas = np.linspace(0, 2*np.pi, numOfFigures+1)[:-1]
+                azimuths = -90 + 20.0 * np.cos(thetas)
+                for i, azim in enumerate(azimuths):
+                    fname = dict + "plots/fig%d.png" % i
+                    ax.elev, ax.azim = 0, azim
+                    fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0)
+                    images.append(imageio.imread(fname))
+                if gif:
+                    kargs = { 'duration': 0.05 }
+                    imageio.mimsave(dict + "plots/animation.gif", images, format="GIF", **kargs)
 
         plt.show()
-
 
 
     @staticmethod
@@ -698,22 +721,19 @@ class Plot:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2]*system.distance, element[0], s=0.5, color=color)
+            plt.scatter(element[2] * system.distance, element[0], s=0.5, color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
-            plt.savefig(dict + "plots/jacobi.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+            plt.savefig(dict + "plots/jacobi.pdf", format='pdf', dpi=500, bbox_inches='tight')
         plt.show()
-
 
     @staticmethod
     def plotPeriod(data, lagrangian, system, dict, save):
-
         distance = system.distance
         G = system.G
         massFP = system.massFP
         massSP = system.massSP
-
         plt.title("%s - %s %s" % (system.nameFP, system.nameSP, lagrangian))
         plt.xlabel("$x$ [m]")
         plt.ylabel("Period [Days]")
@@ -722,11 +742,13 @@ class Plot:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2]*system.distance, (element[1]*np.sqrt(distance**3/(G*(massFP+massSP))))/(60*60*24), s=0.5, color=color)
+            plt.scatter(element[2] * system.distance,
+                        (element[1] * np.sqrt(distance ** 3 / (G * (massFP + massSP)))) / (60 * 60 * 24), s=0.5,
+                        color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
-            plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+            plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches='tight')
         plt.show()
 
 
@@ -744,17 +766,16 @@ class Plot:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2]*system.distance, stability, s=0.5, color=color)
+            plt.scatter(element[2] * system.distance, stability, s=0.5, color=color)
         if save:
             if not os.path.exists(dict + "plots"):
                 os.makedirs(dict + "plots")
-            plt.savefig(dict + "plots/stability.pdf", format='pdf', dpi=500, bbox_inches = 'tight')
+            plt.savefig(dict + "plots/stability.pdf", format='pdf', dpi=500, bbox_inches='tight')
         plt.show()
 
 
     @staticmethod
     def plotFromTable(folder):
-
         table = open("Output/" + folder + "/data.txt", "r")
         for lines in table:
             line = lines.split()
@@ -778,12 +799,12 @@ class Plot:
                     line = table.readline()
                 words = line.split()
                 for i in range(3):
-                    words.insert(2*i + 3, 0)
+                    words.insert(2 * i + 3, 0)
                 data = words
                 while "DATA_STOP" not in line:
                     words = line.split()
                     for i in range(3):
-                        words.insert(2*i + 3, 0)
+                        words.insert(2 * i + 3, 0)
                     data = np.vstack([data, words])
                     line = table.readline()
                 data = data.astype(np.float)
@@ -793,20 +814,3 @@ class Plot:
         dict = "Output/" + folder + "/"
 
         Plot.plot(data, system, dict, lagrangian)
-
-        # if jacobi:
-        #     Plot.plotJacobi(data, lagrangian, system, dict, save)
-        # if period:
-        #     Plot.plotPeriod(data, lagrangian, system, dict, save)
-        # if stability:
-        #     Plot.plotStability(data, lagrangian, system, dict, save)
-        # if orbits:
-        #     if orbitNumber is None:
-        #         Plot.plot(data, system, dict=dict, projection=projection, background=background, save=save)
-        #     else:
-        #         step = number/(orbitNumber-1)
-        #         reducedData = data[0, :]
-        #         for i in range(orbitNumber-2):
-        #             reducedData = np.vstack([reducedData, data[round(step*(i+1)), :]])
-        #         reducedData = np.vstack([reducedData, data[-1, :]])
-        #         Plot.plot(reducedData, system, dict=dict, lagrangian=lagrangian, projection=projection, background=background, save=save)

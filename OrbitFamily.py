@@ -3,29 +3,34 @@ File    : OrbitFamily.py
 Author  : Victor Hertel
 Date    : 28.05.2018
 
-OrbitFamily Class and L1Family/L2Family Subclasses
+Includes the OrbitFamily Class and OrbitContinuation Class
 """
 
-# Imports
-from Orbit import Orbit
-from Utility import Plot, NumericalMethods
-import numpy as np
 import math
-import time
 import os
+import time
+import numpy as np
+from Orbit import Orbit
+from Utility import Plot
 
 
-# orbitfamily class
 class OrbitFamily:
-
+    # path to the output folder
     dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
-    def __init__(self, x0, orbitDistance, system, orbitNumber=None):
+    # initializes by setting attributes and checking for the lagrangian
+    def __init__(self, x0, system, orbitNumber=None):
+        # initial guess of input orbit
         self.x0 = x0
-        self.orbitDistance = orbitDistance
+        # distance between orbits
+        self.orbitDistance = 0.0005
+        # dynamical system
         self.system = system
+        # number of orbits to be calculated
         self.orbitNumber = orbitNumber
+        # sets data for writing and plotting
         self.familyData = None
+        # checks for lagrangian
         if x0[0] < 1:
             self.lagrangian = "L1"
         elif x0[0] > 1:
@@ -34,31 +39,42 @@ class OrbitFamily:
             print("Lagrangian type could not be determined.")
             self.lagrangian = None
 
+    # calculates halo family using the natural parameter continuation
     def getHaloFamily(self):
+        # checks if attribute orbitNumber has been passed
         if self.orbitNumber is None:
             print("Orbit Number is not given.")
             exit()
         # prints status update
         print("STATUS: Generation of a family of %d Halo Orbits around %s...\n" % (self.orbitNumber, self.lagrangian))
+        # natural parameter continuation
         OrbitContinuation.natParaConti(self)
+        # prints status update
         print("DONE")
 
+    # searches for closest NRHO and stores NRHO family
     def getNRHOFamily(self):
         orbit = Orbit(self.x0, "z", self.system)
         orbit.getClosestNRHO()
         self.x0 = orbit.x0
         OrbitContinuation.natParaConti(self, NRHOFamily=True)
 
+    # writes family data including jacobi constant, period and initial states into file
     def writeData(self):
+        # checks if the data has been calculated
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
             return
+        # checks if the folder to store in already exists
         if not os.path.exists(OrbitFamily.dict):
             os.makedirs(OrbitFamily.dict)
+        # creates file
         output = open(OrbitFamily.dict + "data.txt", "w")
+        # writes header data
         output.write("CREATION_DATE            =      " + time.strftime("%Y-%m-%dT%H:%M:%S") + "\n"
-                     "ORIGINATOR               =      ASTOS SOLUTIONS GMBH\n\n")
+                                                                                               "ORIGINATOR               =      ASTOS SOLUTIONS GMBH\n\n")
+        # writes meta data
         output.write("META_START\n"
                      "NAME FIRST PRIMARY       =      %s\n"
                      "MASS FIRST PRIMARY       =      %e\n"
@@ -70,7 +86,9 @@ class OrbitFamily:
                      "ORBIT NUMBER             =      %d\n"
                      "ORBIT DISTANCE           =      %f\n"
                      "META_STOP\n\n" % (self.system.nameFP, self.system.massFP, self.system.nameSP, self.system.massSP,
-                                        self.system.distance, self.system.mu, self.lagrangian, self.orbitNumber, self.orbitDistance))
+                                        self.system.distance, self.system.mu, self.lagrangian, self.orbitNumber,
+                                        self.orbitDistance))
+        # writes orbit data
         output.write("DATA_START\n")
         output.write("        JC           Period           x              z            dy/dt\n")
         for orbit in self.familyData:
@@ -80,9 +98,12 @@ class OrbitFamily:
             output.write('{0:15.10f}'.format(orbit[4]))
             output.write('{0:15.10f}\n'.format(orbit[6]))
         output.write("DATA_STOP")
+        # closes file
         output.close()
 
+    # plots data depending on user input
     def plot(self):
+        # checks if the data has been calculated
         if self.familyData is None:
             print("        No data has been calculated yet\n"
                   "DONE")
@@ -90,126 +111,124 @@ class OrbitFamily:
         Plot.plot(self.familyData, self.system, OrbitFamily.dict, self.lagrangian)
 
 
-
-
 class OrbitContinuation:
-    # --------------------------------------------------------------------------
-    # NATURAL PARAMETER CONTINUATION
-    #
-    # DESCRIPTION:      Creates a family of halo orbits using the Natural Parameter Continuation,
-    #                   a simple strategy based on a single converged solution to find and construct
-    #                   related solutions. One parameter associated with the single converged solution
-    #                   is incremented by a small, specific amount. This modified solution is now
-    #                   employed as an initial guess for a new trajectory. Depending on the gradient of
-    #                   the halo shape, either the x- or z-value is incremented by a specific stepsize,
-    #                   that is calculated for each orbit based on the last two solutions for reaching
-    #                   a uniformed plot with constant distances between the orbits.
-    #
-    #                   The distance between the orbits (orbitDistance) has been successfully tested for the range of 0.005 - 0.0075
-    #
-    # OUTPUT:           No output is generated. The orbits are plotted in the
-    #                   figure that has been created before the function call
-    #
-    # SYNTAX:           natParaConti(x0, mu, epsilon, orbitNumber, orbitDistance, lagrangian, haloFamily, ax)
-    #
-    # x0            =   Initial State Guess
-    # mu            =   Mass ratio of Primaries
-    # epsilon       =   Error Tolerance of Constraints at T/2
-    # orbitNumber   =   Number of Orbits to search for
-    # orbitDistance =   Distance between Orbits
-    # lagrangian    =   Lagrangian Point
-    #                   Input possibilities: {"L1", "L2"}
-    # haloFamily    =   Desired family of Halo Orbits:
-    #                   Input possibilities: {"northern", "southern", "both"}
-    # --------------------------------------------------------------------------
+
+    # natural parameter continuation method
     @staticmethod
     def natParaConti(family, NRHOFamily=False):
-        # calculates first two orbits
+        # initial guess of input orbit
         x_n = family.x0
+        # prints status update
         print("        Orbit Number: 1    (fixed z-value)")
+        # calculates first two orbits
         for i in range(2):
+            # creates orbit object
             orbit = Orbit(x_n, "z", family.system, comment=False)
+            # checks if error occurred during orbit instantiation
             if Orbit.error is True:
+                # updates number of orbits to number of calculated orbits
                 family.orbitNumber = len(output)
+                # sets output data
                 family.familyData = output
                 return
             if i == 0:
+                # stores initial state of first orbit
                 outX = orbit.x0
+                # calculates jacobi constant of first orbit
                 orbit.getJacobi()
+                # sets output data
                 output = orbit.data
+                # modifies initial state to initial guess of second orbit
                 x_n = outX - np.array([0, 0, 0.0001, 0, 0, 0])
+                # prints status update
                 print("        Reference Orbit:")
             else:
+                # stores initial state of second orbit for comparison
                 lastX = orbit.x0
 
+        # stop criteria
         stopLoop = False
+        # counter
         i = 0
 
+        # loops through orbits
         while not stopLoop:
-        # loops through number of additional orbits
             # checks whether x- or z-value has changed more since last iteration
             if abs(lastX[0] - outX[0]) > abs(lastX[2] - outX[2]):
                 # x-value changed more than z-value and needs to be fixed
                 print("        Orbit Number: %2d    (fixed x-value)" % (i + 2))
+                # calculates the change of z
                 dz = abs(outX[2] - lastX[2])
-                stepSize = np.sqrt(family.orbitDistance**2 - dz**2)
+                # calculates new stepsize for next orbit to reach constant distances in between
+                stepSize = np.sqrt(family.orbitDistance ** 2 - dz ** 2)
+                # reduces distance if mathematical error occurred
                 if math.isnan(stepSize):
                     stepSize = family.orbitDistance / 2
                 # generates next initial guess depending on continuation direction
                 if family.lagrangian == "L1":
-                    x_n = outX + np.array([stepSize, 0, 0, 0, 0, 0])   # +
+                    x_n = outX + np.array([stepSize, 0, 0, 0, 0, 0])
                 elif family.lagrangian == "L2":
-                    x_n = outX - np.array([stepSize, 0, 0, 0, 0, 0])   # -
-                else:
-                    print("Lagrangian type not supported.")
-                    exit()
-                # calculates initial state
+                    x_n = outX - np.array([stepSize, 0, 0, 0, 0, 0])
+                # calculates initial state of next orbit
                 orbit = Orbit(x_n, "x", family.system, comment=False)
+                # checks if error occurred during orbit instantiation
                 if Orbit.error is True:
+                    # updates number of orbits to number of calculated orbits
                     family.orbitNumber = len(output)
+                    # sets output data
                     family.familyData = output
                     return
                 # saves last initial state for comparison of next iteration
                 lastX = outX
                 outX = orbit.x0
+                # includes orbit data to output data
                 output = np.vstack([output, orbit.data])
 
             else:
                 # z-value changed more than x-value and needs to be fixed
                 print("        Orbit Number: %2d    (fixed z-value)" % (i + 2))
+                # calculates the change of x
                 dx = abs(outX[0] - lastX[0])
+                # calculates new stepsize for next orbit to reach constant distances in between
                 stepSize = np.sqrt(family.orbitDistance ** 2 - dx ** 2)
+                # reduces distance if mathematical error occurred
                 if math.isnan(stepSize):
                     stepSize = family.orbitDistance / 2
                 # generates next initial guess depending on continuation direction
                 if family.lagrangian == "L1":
-                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])   # -
+                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
                 elif family.lagrangian == "L2":
-                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])   # -
-                else:
-                    print("Lagrangian type not supported.")
-                    exit()
-                # calculates initial state
+                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
+                # calculates initial state of next orbit
                 orbit = Orbit(x_n, "z", family.system, comment=False)
+                # checks if error occurred during orbit instantiation
                 if Orbit.error is True:
+                    # updates number of orbits to number of calculated orbits
                     family.orbitNumber = len(output)
+                    # sets output data
                     family.familyData = output
                     return
                 # saves last initial state for comparison of next iteration
                 lastX = outX
                 outX = orbit.x0
+                # includes orbit data to output data
                 output = np.vstack([output, orbit.data])
 
+            # when seachring for NRHO family stability index is checked for every orbit
             if NRHOFamily is True:
+                # calculates stability index
                 orbit.getStability()
-                print(orbit.stability)
                 if not orbit.NRHO:
+                    # sets stop criteria when stability index out of range
                     stopLoop = True
+            # increments counter until number of orbits is reached
             else:
-                if i == (family.orbitNumber-2):
-                    stopLoop=True
-
+                if i == (family.orbitNumber - 2):
+                    # sets stop criteria when number of orbits is reached
+                    stopLoop = True
+            # increments counter
             i += 1
 
+        # sets output data
         family.familyData = output
         return
