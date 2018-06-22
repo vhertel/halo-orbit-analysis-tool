@@ -1,0 +1,18 @@
+CREATION_DATE            =      2018-06-22T15.11.18
+ORIGINATOR               =      ASTOS SOLUTIONS GMBH
+
+META_START
+TYPE                     =      ORBIT
+NAME FIRST PRIMARY       =      Earth
+MASS FIRST PRIMARY       =      5.972370e+24
+NAME SECOND PRIMARY      =      Moon
+MASS SECOND PRIMARY      =      7.342000e+22
+PRIMARY DISTANCE         =      3.844020e+08
+MASS RATIO               =      0.0121439878
+LAGRANGIAN               =      L1
+META_STOP
+
+DATA_START
+        JC           Period           x              z            dy/dt
+   3.1721706197   2.7533584686   0.8235990912  -0.0399866715   0.1492106867
+DATA_STOP

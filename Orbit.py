@@ -15,16 +15,15 @@ from Utility import NumericalMethods
 from Utility import Plot
 from Utility import Utility
 
-
-
-
 import matplotlib as mpl
+
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import misc
 from Utility import Utility, Plot
 from scipy.integrate import odeint
+
 
 class Orbit:
     # accuracy of differential corrections method
@@ -62,6 +61,11 @@ class Orbit:
         # sets data for plot
         self.data = np.array(
             [self.jacobi, self.period, self.x0[0], self.x0[1], self.x0[2], self.x0[3], self.x0[4], self.x0[5]])
+        # checks for lagrangian
+        if self.x0[0] < 1:
+            self.lagrangian = "L1"
+        elif self.x0[0] > 1:
+            self.lagrangian = "L2"
         self.unstableManifolds = None
         self.stableManifolds = None
         # prints status updated if requested
@@ -176,11 +180,7 @@ class Orbit:
         else:
             self.NRHO = False
 
-
-
-
-
-    def stableManifold(self, numberOfPoints, durationFactor):
+    def stableManifold(self, numberOfPoints):
 
         #
         epsilon = 0.00013007216403660752
@@ -194,7 +194,10 @@ class Orbit:
         #
         orbitStates = odeint(Utility.backwards, self.x0, t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
         #
-        orbitTags = round(len(orbitStates)/numberOfPoints)
+        if numberOfPoints == 0:
+            return
+        else:
+            orbitTags = round(len(orbitStates) / numberOfPoints)
         #
         reducedOrbitStates = np.zeros((numberOfPoints, 6))
         #
@@ -204,8 +207,8 @@ class Orbit:
         #
         for i in range(numberOfPoints):
             #
-            reducedOrbitStates[i, :] = orbitStates[i*orbitTags, :]
-            orbitTimes[i] = t[i*orbitTags]
+            reducedOrbitStates[i, :] = orbitStates[i * orbitTags, :]
+            orbitTimes[i] = t[i * orbitTags]
         #
         monodromy = Utility.stm(self.x0, self.period, self.system.mu)
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
@@ -213,50 +216,25 @@ class Orbit:
         i = 0
         for element in eigenvalues:
             if element == min(eigenvalues):
-                stableEigenvector = np.real(eigenvectors[:,i])
+                stableEigenvector = np.real(eigenvectors[:, i])
             i += 1
         #
-        manifoldStates[0, :] = self.x0 + epsilon*stableEigenvector
+        manifoldStates[0, :] = self.x0 + epsilon * stableEigenvector
         #
         for i in range(1, numberOfPoints):
             #
             perturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(stableEigenvector)
             #
-            s_pV = perturbationVector/np.sqrt(perturbationVector[0]**2 + perturbationVector[1]**2 + perturbationVector[2]**2)
+            s_pV = perturbationVector / np.sqrt(
+                perturbationVector[0] ** 2 + perturbationVector[1] ** 2 + perturbationVector[2] ** 2)
             #
-            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon*s_pV
+            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * s_pV
         #
         self.stableManifolds = manifoldStates
 
-
-
-
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
-        # t = np.linspace(0, durationFactor*self.period, num=10000)
-        # for i in range(numberOfPoints):
-        #     manifold = odeint(Utility.backwards, manifoldStates[i, :], t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
-        #     x = manifold[:, 0]
-        #     y = manifold[:, 1]
-        #     z = manifold[:, 2]
-        #     ax.plot(x, y, z, color='green', linewidth=0.5)
-        # xOrbit = orbitStates[:, 0]
-        # yOrbit = orbitStates[:, 1]
-        # zOrbit = orbitStates[:, 2]
-        # ax.plot(xOrbit, yOrbit, zOrbit, color='black', linewidth=1)
-        # ax.scatter((1 - self.system.mu), 0, 0, color='grey', s=1, label="Moon")
-        # ax.scatter((-self.system.mu), 0, 0, color='blue', s=3, label="Moon")
-        # Plot.setAxesEqual(ax)
-        # plt.show()
-
-
-
-
-
-
-    def unstableManifold(self, numberOfPoints, durationFactor):
+    def unstableManifold(self, numberOfPoints):
         #
-        #epsilon = 2.0e-8
+        # epsilon = 2.0e-8
         epsilon = 0.00013007216403660752
         #
         if numberOfPoints <= 10000:
@@ -268,7 +246,10 @@ class Orbit:
         #
         orbitStates = odeint(Utility.sysEquations, self.x0, t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
         #
-        orbitTags = round(len(orbitStates)/numberOfPoints)
+        if numberOfPoints == 0:
+            return
+        else:
+            orbitTags = round(len(orbitStates) / numberOfPoints)
         #
         reducedOrbitStates = np.zeros((numberOfPoints, 6))
         #
@@ -278,8 +259,8 @@ class Orbit:
         #
         for i in range(numberOfPoints):
             #
-            reducedOrbitStates[i, :] = orbitStates[i*orbitTags, :]
-            orbitTimes[i] = t[i*orbitTags]
+            reducedOrbitStates[i, :] = orbitStates[i * orbitTags, :]
+            orbitTimes[i] = t[i * orbitTags]
         #
         monodromy = Utility.stm(self.x0, self.period, self.system.mu)
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
@@ -287,56 +268,25 @@ class Orbit:
         i = 0
         for element in eigenvalues:
             if element == max(eigenvalues):
-                unstableEigenvector = np.real(eigenvectors[:,i])
+                unstableEigenvector = np.real(eigenvectors[:, i])
             i += 1
         #
-        manifoldStates[0, :] = self.x0 + epsilon*unstableEigenvector
+        manifoldStates[0, :] = self.x0 + epsilon * unstableEigenvector
         #
         for i in range(1, numberOfPoints):
             #
             perturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(unstableEigenvector)
             #
-            u_pV = perturbationVector/np.sqrt(perturbationVector[0]**2 + perturbationVector[1]**2 + perturbationVector[2]**2)
+            u_pV = perturbationVector / np.sqrt(
+                perturbationVector[0] ** 2 + perturbationVector[1] ** 2 + perturbationVector[2] ** 2)
             #
-            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon*u_pV
+            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * u_pV
         #
         self.unstableManifolds = manifoldStates
-
-
-
-
-
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
-        # t = np.linspace(0, durationFactor*self.period, num=10000)
-        # for i in range(numberOfPoints):
-        #     manifold = odeint(Utility.sysEquations, manifoldStates[i, :], t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
-        #     x = manifold[:, 0]
-        #     y = manifold[:, 1]
-        #     z = manifold[:, 2]
-        #     ax.plot(x, y, z, color='red', linewidth=0.5)
-        # xOrbit = orbitStates[:, 0]
-        # yOrbit = orbitStates[:, 1]
-        # zOrbit = orbitStates[:, 2]
-        # ax.plot(xOrbit, yOrbit, zOrbit, color='black', linewidth=1)
-        # ax.scatter((1 - self.system.mu), 0, 0, color='grey', s=1, label="Moon")
-        # ax.scatter((-self.system.mu), 0, 0, color='blue', s=3, label="Moon")
-        # Plot.setAxesEqual(ax)
-        # plt.show()
-
-
-
-
-
 
     # plots orbit
     def plot(self):
         # method is canceled when error occured
         if Orbit.error is True:
             return
-        # checks for lagrangian
-        if self.x0[0] < 1:
-            lagrangian = "L1"
-        elif self.x0[0] > 1:
-            lagrangian = "L2"
-        Plot.plot(np.array([self.data]), self.system, Orbit.dict, lagrangian)
+        Plot.plot(np.array([self.data]), self.system, Orbit.dict)

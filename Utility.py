@@ -12,10 +12,12 @@ from scipy.integrate import odeint
 import os
 from numpy.linalg import svd
 import matplotlib as mpl
+
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import imageio
+
 
 class System:
 
@@ -189,7 +191,6 @@ class NumericalMethods:
 
 
 class Utility:
-
     """
     # A Taylor series expansion retaining only first-order terms is used to
     # linearize the nonlinear system equations of motion. With the six-dimensional
@@ -198,6 +199,7 @@ class Utility:
     #
     #      dx/dt = A(t) * x(t)
     """
+
     @staticmethod
     def AMatrix(x, mu):
 
@@ -235,7 +237,6 @@ class Utility:
 
         return A
 
-
     """
     # CALCULATING SYSTEMS OF EQUATIONS
     #
@@ -257,6 +258,7 @@ class Utility:
     #                               dPhi(t,0)/dt = A(t) * Phi(t,0) as the first 36 values and the six
     #                               dimensional state vector dx/dt as the last 6 elements
     """
+
     @staticmethod
     def sysEquations(y, t, mu):
 
@@ -294,8 +296,8 @@ class Utility:
 
         elif len(y) == 6:
             # calculates r1, r2 and the state vector dx/dt = [dx/dt, dy/dt, dz/dt, dvx/dt, dvy/dt, dvz/dt]^T
-            r1 = np.sqrt((y[0] + mu)** 2 + y[1]** 2 + y[2]** 2)
-            r2 = np.sqrt((y[0] - (1 - mu))** 2 + y[1]** 2 + y[2]** 2)
+            r1 = np.sqrt((y[0] + mu) ** 2 + y[1] ** 2 + y[2] ** 2)
+            r2 = np.sqrt((y[0] - (1 - mu)) ** 2 + y[1] ** 2 + y[2] ** 2)
             ydot = np.array([y[3],
                              y[4],
                              y[5],
@@ -309,12 +311,11 @@ class Utility:
         else:
             print("Dimension of input parameter y is not supported.")
 
-
     @staticmethod
     def backwards(y, t, mu):
         # calculates r1, r2 and the state vector dx/dt = [dx/dt, dy/dt, dz/dt, dvx/dt, dvy/dt, dvz/dt]^T
-        r1 = np.sqrt((y[0] + mu)** 2 + y[1]** 2 + y[2]** 2)
-        r2 = np.sqrt((y[0] - (1 - mu))** 2 + y[1]** 2 + y[2]** 2)
+        r1 = np.sqrt((y[0] + mu) ** 2 + y[1] ** 2 + y[2] ** 2)
+        r2 = np.sqrt((y[0] - (1 - mu)) ** 2 + y[1] ** 2 + y[2] ** 2)
         ydot = np.array([- y[3],
                          - y[4],
                          - y[5],
@@ -324,7 +325,6 @@ class Utility:
                          - (- ((1 - mu) * y[2]) / (r1 ** 3) - (mu * y[2]) / (r2 ** 3))])
 
         return ydot
-
 
     """
     # STATE TRANSITION MATRIX
@@ -341,6 +341,7 @@ class Utility:
     #
     # OUTPUT:           Output is the 6x6 State Transition Matrix
     """
+
     @staticmethod
     def stm(x, tf, mu):
 
@@ -366,7 +367,6 @@ class Utility:
 
         return phi
 
-
     """
     # HALF PERIOD
     #
@@ -381,6 +381,7 @@ class Utility:
     # mu            =   Mass ratio of Primaries
     # epsilon       =   Error Tolerance
     """
+
     @staticmethod
     def halfPeriod(x0, mu, epsilon):
         # declares and initializes actual state x and state at half period xHalfPeriod
@@ -481,7 +482,6 @@ class Plot:
         ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
         ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
         ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
-
 
     @staticmethod
     def plot(data, system, dict, lagrangian):
@@ -597,7 +597,6 @@ class Plot:
             Plot.plotStability(data, lagrangian, system, dict, save)
         print("DONE")
 
-
     @staticmethod
     def plotOrbit(data, system, dict, lagrangian, threed, xz, yz, xy, save, background, gif):
 
@@ -650,7 +649,7 @@ class Plot:
             ax.scatter((1 - system.mu) * system.distance, 0, 0, color='grey', s=1, label="Moon")
             ax.scatter(lagrangianPosition[0] * system.distance, 0, 0, color='blue', s=0.3, label="L1/L2")
             ax.scatter(lagrangianPosition[1] * system.distance, 0, 0, color='blue', s=0.3)
-            #ax.legend(loc="center right", prop={'size': 6})
+            # ax.legend(loc="center right", prop={'size': 6})
 
         for i in range(len(data)):
             norm = (data[i, 0] - jacobiMin) / (jacobiMax - jacobiMin)
@@ -697,7 +696,7 @@ class Plot:
             if threed:
                 images = []
                 numOfFigures = 150
-                thetas = np.linspace(0, 2*np.pi, numOfFigures+1)[:-1]
+                thetas = np.linspace(0, 2 * np.pi, numOfFigures + 1)[:-1]
                 azimuths = -90 + 20.0 * np.cos(thetas)
                 for i, azim in enumerate(azimuths):
                     fname = dict + "plots/fig%d.png" % i
@@ -705,11 +704,10 @@ class Plot:
                     fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0)
                     images.append(imageio.imread(fname))
                 if gif:
-                    kargs = { 'duration': 0.05 }
+                    kargs = {'duration': 0.05}
                     imageio.mimsave(dict + "plots/animation.gif", images, format="GIF", **kargs)
 
         plt.show()
-
 
     @staticmethod
     def plotJacobi(data, lagrangian, system, dict, save):
@@ -751,7 +749,6 @@ class Plot:
             plt.savefig(dict + "plots/period.pdf", format='pdf', dpi=500, bbox_inches='tight')
         plt.show()
 
-
     @staticmethod
     def plotStability(data, lagrangian, system, dict, save):
         plt.title("%s - %s %s" % (system.nameFP, system.nameSP, lagrangian))
@@ -772,7 +769,6 @@ class Plot:
                 os.makedirs(dict + "plots")
             plt.savefig(dict + "plots/stability.pdf", format='pdf', dpi=500, bbox_inches='tight')
         plt.show()
-
 
     @staticmethod
     def plotFromTable(folder):
