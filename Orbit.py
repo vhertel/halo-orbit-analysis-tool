@@ -73,7 +73,7 @@ class Orbit:
             print("DONE")
 
     # searches for closest NRHO by using the pseudo-arclength continuation method
-    def getClosestNRHO(self):
+    def getClosestNRHO(self, direction=None):
         # method is canceled when error occured
         if Orbit.error is True:
             return
@@ -87,6 +87,12 @@ class Orbit:
             print("        Halo Orbit is already NRHO.")
         # starts pseudo-arclength continuation method
         else:
+            # adjusts z-value for continuation theme
+            print(direction)
+            if direction == 0:
+                self.x0[2] = 5.0e-4
+            elif direction == 1:
+                self.x0[2] = -5.0e-4
             # calculates T/2 by integrating until y changes sign
             try:
                 tau_n = Utility.halfPeriod(self.x0, self.system.mu, 1.0e-11)
@@ -94,55 +100,42 @@ class Orbit:
                 return
             # stepsize
             stepSize = 0.01
-            while abs(self.stability - Orbit.stabilityCriteria) > 1.0e-2:
+            while self.stability > Orbit.stabilityCriteria:
                 # searches for next NRHO using pseudo-arclength continuation method
-                while self.NRHO is False:
-                    print("SCHLEIFE")
-                    lastX = self.x0
-                    lastPeriod = self.period
-                    print(self.x0)
-                    outData = NumericalMethods.diffCorrections(self.x0, self.system.mu, Orbit.accuracy, tau=tau_n)
-                    x_n = outData[0]
-                    print(x_n)
-                    tau_n = outData[1]
-                    phi = outData[2]
-                    xRef = outData[3]
-                    xdot = outData[4]
-                    freeVariables = outData[5]
-                    DF = outData[6]
-                    # calculates the null space vector of Jacobian matrix DF
-                    nullSpace = Utility.nullspace(DF)
-                    # declares and initializes the augmented free variable vector
-                    contiFreeVariables = np.array([x_n[0], x_n[2], x_n[4], tau_n])
-                    # declares and initializes the augmented constraints vector
-                    contiConstraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5],
-                                                 (contiFreeVariables - freeVariables).T.dot(nullSpace) + stepSize])
-                    # calculates corrections to the initial state to meet a defined margin of error
-                    GF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
-                                   [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
-                                   [phi[5, 0], phi[5, 2], phi[5, 4], xdot[5]],
-                                   [nullSpace[0], nullSpace[1], nullSpace[2], nullSpace[3]]])
-                    xIter = contiFreeVariables - (np.linalg.inv(GF)).dot(contiConstraints)
-                    # sets the updated initial condition vector
-                    x_n = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
-                    # sets T/2 of updated initial conditions
-                    tau_n = xIter[3]
-                    # sets attributes
-                    self.x0 = x_n
-                    self.period = 2 * tau_n
-                    Orbit.getJacobi(self)
-                    self.data = np.array([self.jacobi, self.period, x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]])
-                    # updates stability index of orbit
-                    Orbit.getStability(self)
-                    print(self.x0)
-                    print("        Stability index: %8.4f" % self.stability)
-                self.x0 = lastX
-                print(self.x0)
-                self.period = lastPeriod
+                outData = NumericalMethods.diffCorrections(self.x0, self.system.mu, Orbit.accuracy, tau=tau_n)
+                x_n = outData[0]
+                tau_n = outData[1]
+                phi = outData[2]
+                xRef = outData[3]
+                xdot = outData[4]
+                freeVariables = outData[5]
+                DF = outData[6]
+                # calculates the null space vector of Jacobian matrix DF
+                nullSpace = Utility.nullspace(DF)
+                # declares and initializes the augmented free variable vector
+                contiFreeVariables = np.array([x_n[0], x_n[2], x_n[4], tau_n])
+                # declares and initializes the augmented constraints vector
+                contiConstraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5],
+                                             (contiFreeVariables - freeVariables).T.dot(nullSpace) + stepSize])
+                # calculates corrections to the initial state to meet a defined margin of error
+                GF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
+                               [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
+                               [phi[5, 0], phi[5, 2], phi[5, 4], xdot[5]],
+                               [nullSpace[0], nullSpace[1], nullSpace[2], nullSpace[3]]])
+                xIter = contiFreeVariables - (np.linalg.inv(GF)).dot(contiConstraints)
+                # sets the updated initial condition vector
+                x_n = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
+                # sets T/2 of updated initial conditions
+                tau_n = xIter[3]
+                # sets attributes
+                self.x0 = x_n
+                self.period = 2 * tau_n
+                Orbit.getJacobi(self)
+                self.data = np.array([self.jacobi, self.period, x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]])
+                # updates stability index of orbit
+                lastStability = self.stability
                 Orbit.getStability(self)
-                stepSize = stepSize * 1.0e-1
-                print("FERTIG")
-
+                print("        Stability index: %8.4f" % self.stability)
             print(
                 "\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
                     x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
