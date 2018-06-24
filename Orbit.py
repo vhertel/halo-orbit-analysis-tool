@@ -136,6 +136,8 @@ class Orbit:
                 lastStability = self.stability
                 Orbit.getStability(self)
                 print("        Stability index: %8.4f" % self.stability)
+            self.stableManifolds = None
+            self.unstableManifolds = None
             print(
                 "\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
                     x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
@@ -173,109 +175,62 @@ class Orbit:
         else:
             self.NRHO = False
 
-    def stableManifold(self, numberOfPoints):
-
-        #
+    def invariantManifolds(self, numberOfPoints):
+        # perturbation of state in stable/unstable eigenvector direction
         epsilon = 0.00013007216403660752
-        #
-        if numberOfPoints <= 10000:
-            num = 10000
+        # number of points to split the orbit
+        if numberOfPoints <= 1000:
+            num = 1000
         else:
             num = numberOfPoints
-        #
+        # integrates orbit in CR3BP
         t = np.linspace(0, self.period, num=num)
-        #
-        orbitStates = odeint(Utility.backwards, self.x0, t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
-        #
+        orbitStates = odeint(Utility.sysEquations, self.x0, t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
+        # specifies distance to get uniformed manifolds around the orbit
         if numberOfPoints == 0:
             return
         else:
-            orbitTags = round(len(orbitStates) / numberOfPoints)
-        #
+            orbitTags = len(orbitStates) / numberOfPoints
+        # declares state vector with desired number of manifolds
         reducedOrbitStates = np.zeros((numberOfPoints, 6))
-        #
+        # declares time vector with desired number of manifolds
         orbitTimes = np.zeros(numberOfPoints)
-        #
-        manifoldStates = np.zeros((numberOfPoints, 6))
-        #
+        # declares manifold states with desired number of manifolds
+        stableManifoldStates = np.zeros((numberOfPoints, 6))
+        unstableManifoldStates = np.zeros((numberOfPoints, 6))
+        # gets states and time of points on the orbit
         for i in range(numberOfPoints):
-            #
-            reducedOrbitStates[i, :] = orbitStates[i * orbitTags, :]
-            orbitTimes[i] = t[i * orbitTags]
-        #
+            reducedOrbitStates[i, :] = orbitStates[round(i * orbitTags), :]
+            orbitTimes[i] = t[round(i * orbitTags)]
+        # calculates monodromy matrix of orbit
         monodromy = Utility.stm(self.x0, self.period, self.system.mu)
+        # gets eigenvalues and eigenvectors of monodromy matrix
         eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-        #
+        # stores stable and unstable eigenvector
         i = 0
         for element in eigenvalues:
             if element == min(eigenvalues):
                 stableEigenvector = np.real(eigenvectors[:, i])
-            i += 1
-        #
-        manifoldStates[0, :] = self.x0 + epsilon * stableEigenvector
-        #
-        for i in range(1, numberOfPoints):
-            #
-            perturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(stableEigenvector)
-            #
-            s_pV = perturbationVector / np.sqrt(
-                perturbationVector[0] ** 2 + perturbationVector[1] ** 2 + perturbationVector[2] ** 2)
-            #
-            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * s_pV
-        #
-        self.stableManifolds = manifoldStates
-
-    def unstableManifold(self, numberOfPoints):
-        #
-        # epsilon = 2.0e-8
-        epsilon = 0.00013007216403660752
-        #
-        if numberOfPoints <= 10000:
-            num = 10000
-        else:
-            num = numberOfPoints
-        #
-        t = np.linspace(0, self.period, num=num)
-        #
-        orbitStates = odeint(Utility.sysEquations, self.x0, t, args=(self.system.mu,), rtol=2.5e-13, atol=1e-22)
-        #
-        if numberOfPoints == 0:
-            return
-        else:
-            orbitTags = round(len(orbitStates) / numberOfPoints)
-        #
-        reducedOrbitStates = np.zeros((numberOfPoints, 6))
-        #
-        orbitTimes = np.zeros(numberOfPoints)
-        #
-        manifoldStates = np.zeros((numberOfPoints, 6))
-        #
-        for i in range(numberOfPoints):
-            #
-            reducedOrbitStates[i, :] = orbitStates[i * orbitTags, :]
-            orbitTimes[i] = t[i * orbitTags]
-        #
-        monodromy = Utility.stm(self.x0, self.period, self.system.mu)
-        eigenvalues, eigenvectors = np.linalg.eig(monodromy)
-        #
-        i = 0
-        for element in eigenvalues:
             if element == max(eigenvalues):
                 unstableEigenvector = np.real(eigenvectors[:, i])
             i += 1
-        #
-        manifoldStates[0, :] = self.x0 + epsilon * unstableEigenvector
-        #
+        # perturbates states of orbit in direction of stable/unstable eigenvector
+        stableManifoldStates[0, :] = self.x0 + epsilon * stableEigenvector
+        unstableManifoldStates[0, :] = self.x0 + epsilon * unstableEigenvector
+        # perturbates the other points of orbit
         for i in range(1, numberOfPoints):
-            #
-            perturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(unstableEigenvector)
-            #
-            u_pV = perturbationVector / np.sqrt(
-                perturbationVector[0] ** 2 + perturbationVector[1] ** 2 + perturbationVector[2] ** 2)
-            #
-            manifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * u_pV
-        #
-        self.unstableManifolds = manifoldStates
+            # calculates perturbation vector by using STM from t0=0
+            stablePerturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(stableEigenvector)
+            unstablePerturbationVector = Utility.stm(self.x0, orbitTimes[i], self.system.mu).dot(unstableEigenvector)
+            # normalizing perturbation vectors
+            stablePerturbationVector = stablePerturbationVector/np.sqrt(stablePerturbationVector[0]** 2 + stablePerturbationVector[1]** 2 + stablePerturbationVector[2]** 2)
+            unstablePerturbationVector = unstablePerturbationVector/np.sqrt(unstablePerturbationVector[0]** 2 + unstablePerturbationVector[1]** 2 + unstablePerturbationVector[2]** 2)
+            # perturbates points of orbit
+            stableManifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * stablePerturbationVector
+            unstableManifoldStates[i, :] = reducedOrbitStates[i, :] + epsilon * unstablePerturbationVector
+        # sets attributes of orbit
+        self.stableManifolds = stableManifoldStates
+        self.unstableManifolds = unstableManifoldStates
 
     # plots orbit
     def plot(self):

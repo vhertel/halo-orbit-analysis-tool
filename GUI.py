@@ -19,12 +19,32 @@ import os
 LARGE_FONT = ("Verdana", 12)
 
 
+class Window():
+
+    @staticmethod
+    def centerWindow(window, width, height):
+        # get screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        # calculate position x and y coordinates
+        x = (screen_width/2) - (width/2)
+        y = (screen_height/2) - (height/2)
+        window.geometry('%dx%d+%d+%d' % (width, height, x, y))
+
+    @staticmethod
+    def fullScreen(window):
+        # get screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        Window.centerWindow(window, screen_width, screen_height)
+
+
 # main class
 class HaloTool(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         Tk.wm_title(self, "HALO TOOL")
-        Tk.geometry(self, "700x500")
+        Window.centerWindow(self, 700, 500)
         container = Frame(self)
         container.pack(side="left", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -76,7 +96,6 @@ class HaloTool(Tk):
 class StartPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        Tk.geometry(controller, "700x500")
         # main frame
         frameStartPage = Frame(self)
         frameStartPage.pack(expand=True, fill=BOTH, padx=10, pady=10)
@@ -432,35 +451,28 @@ class FamilyPage(Frame):
 class OrbitPage(Frame):
     def __init__(self, parent, controller, orbit, dynamicalSystem):
         Frame.__init__(self, parent)
-        Tk.geometry(controller, "1200x700")
         frameLeft = Frame(self)
         frameLeft.pack(fill=BOTH, expand=True, side=LEFT, padx=10, pady=10)
         frameRight = Frame(self)
         frameRight.pack(fill=BOTH, expand=False, side=RIGHT, padx=10, pady=10)
         # orbit attributes
         orbitAttributes = LabelFrame(frameRight, text=" ORBIT ATTRIBUTES ")
-        orbitAttributes.pack(fill=BOTH, expand=True)
+        orbitAttributes.pack(fill=BOTH, expand=True, pady=(0, 10))
+        orbitAttributes.columnconfigure(0, weight=1)
         # initial state
         Label(orbitAttributes, text="Initial State:", width=16, anchor=W).grid(row=0, column=0, padx=5, sticky='W', ipadx=5)
-        self.state0Label = Label(orbitAttributes, text=(orbit.x0[0] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state0Label.grid(row=0, column=1, padx=5)
-        self.state1Label = Label(orbitAttributes, text=(orbit.x0[1] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state1Label.grid(row=1, column=1, padx=5)
-        self.state2Label = Label(orbitAttributes, text=(orbit.x0[2] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state2Label.grid(row=2, column=1, padx=5)
-        self.state3Label = Label(orbitAttributes, text=(orbit.x0[3] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state3Label.grid(row=3, column=1, padx=5)
-        self.state4Label = Label(orbitAttributes, text=(orbit.x0[4] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state4Label.grid(row=4, column=1, padx=5)
-        self.state5Label = Label(orbitAttributes, text=(orbit.x0[5] * dynamicalSystem.distance / 1.0e3).round(2))
-        self.state5Label.grid(row=5, column=1, padx=5)
-        Label(orbitAttributes, text="km").grid(row=0, column=2, padx=5, sticky='E')
-        Label(orbitAttributes, text="km").grid(row=1, column=2, padx=5, sticky='E')
-        Label(orbitAttributes, text="km").grid(row=2, column=2, padx=5, sticky='E')
-        Label(orbitAttributes, text="km/s").grid(row=3, column=2, padx=5, sticky='E')
-        Label(orbitAttributes, text="km/s").grid(row=4, column=2, padx=5, sticky='E')
-        Label(orbitAttributes, text="km/s").grid(row=5, column=2, padx=5, sticky='E')
-
+        self.state0Label = Label(orbitAttributes, text="%.2f km" % (orbit.x0[0] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state0Label.grid(row=0, column=1, padx=5, sticky='E')
+        self.state1Label = Label(orbitAttributes, text="%.2f km" % (orbit.x0[1] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state1Label.grid(row=1, column=1, padx=5, sticky='E')
+        self.state2Label = Label(orbitAttributes, text="%.2f km" % (orbit.x0[2] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state2Label.grid(row=2, column=1, padx=5, sticky='E')
+        self.state3Label = Label(orbitAttributes, text="%.2f km/s" % (orbit.x0[3] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state3Label.grid(row=3, column=1, padx=5, sticky='E')
+        self.state4Label = Label(orbitAttributes, text="%.2f km/s" % (orbit.x0[4] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state4Label.grid(row=4, column=1, padx=5, sticky='E')
+        self.state5Label = Label(orbitAttributes, text="%.2f km/s" % (orbit.x0[5] * dynamicalSystem.distance / 1.0e3).round(2))
+        self.state5Label.grid(row=5, column=1, padx=5, pady=(0,20), sticky='E')
         vel = orbit.x0[4] * dynamicalSystem.distance / (np.sqrt(
             dynamicalSystem.distance ** 3 / (dynamicalSystem.G * (dynamicalSystem.massFP + dynamicalSystem.massSP))))
         #print(vel)
@@ -469,19 +481,18 @@ class OrbitPage(Frame):
         period = (orbit.period * np.sqrt(dynamicalSystem.distance ** 3 / (
                 dynamicalSystem.G * (dynamicalSystem.massFP + dynamicalSystem.massSP)))) / (60 * 60 * 24)
         Label(orbitAttributes, text="Period:").grid(row=7, column=0, padx=5, sticky='W')
-        self.periodLabel = Label(orbitAttributes, text=period.round(2))
-        self.periodLabel.grid(row=7, column=1, padx=5, sticky='W')
-        Label(orbitAttributes, text="days").grid(row=7, column=2, padx=5, sticky='E')
+        self.periodLabel = Label(orbitAttributes, text="%.2f Days" % period)
+        self.periodLabel.grid(row=7, column=1, padx=5, sticky='E')
         # jacobi constant
         Label(orbitAttributes, text="Jacobi Constant:").grid(row=8, column=0, padx=5, sticky='W')
         self.jacobiLabel = Label(orbitAttributes, text=orbit.jacobi.round(2))
-        self.jacobiLabel.grid(row=8, column=1, padx=5, sticky='W')
+        self.jacobiLabel.grid(row=8, column=1, padx=5, sticky='E')
         # stability index
         if orbit.stability is None:
             orbit.getStability()
         Label(orbitAttributes, text="Stability Index:").grid(row=9, column=0, padx=5, sticky='W')
         self.stabilityLabel = Label(orbitAttributes, text=orbit.stability.round(2))
-        self.stabilityLabel.grid(row=9, column=1, padx=5, sticky='W')
+        self.stabilityLabel.grid(row=9, column=1, padx=5, sticky='E')
         # NRHO
         if orbit.NRHO:
             text = "Yes"
@@ -489,34 +500,32 @@ class OrbitPage(Frame):
             text = "No"
         Label(orbitAttributes, text="NRHO:").grid(row=10, column=0, padx=5, sticky='W')
         self.NRHOLabel = Label(orbitAttributes, text=text)
-        self.NRHOLabel.grid(row=10, column=1, padx=5, sticky='W')
+        self.NRHOLabel.grid(row=10, column=1, padx=5, sticky='E')
         # lagrangian
         Label(orbitAttributes, text="Lagrangian:").grid(row=11, column=0, padx=5, sticky='W')
-        Label(orbitAttributes, text=orbit.lagrangian).grid(row=11, column=1, padx=5, sticky='W')
+        Label(orbitAttributes, text=orbit.lagrangian).grid(row=11, column=1, padx=5, sticky='E')
 
         # system attributes
         systemAttributes = LabelFrame(frameRight, text=" SYSTEM ATTRIBUTES ")
-        systemAttributes.pack(fill=BOTH, expand=True, pady=8)
+        systemAttributes.pack(fill=BOTH, expand=True, pady=(0, 10))
+        systemAttributes.columnconfigure(0, weight=1)
         # first primary
         Label(systemAttributes, text="First Primary:", width=17, anchor=W).grid(row=0, column=0, padx=5, sticky='W')
-        Label(systemAttributes, text=dynamicalSystem.nameFP).grid(row=0, column=1, padx=5, sticky='W')
+        Label(systemAttributes, text=dynamicalSystem.nameFP).grid(row=0, column=1, padx=5, sticky='E')
         Label(systemAttributes, text="Mass of " + dynamicalSystem.nameFP + ":").grid(row=1, column=0, padx=5, sticky='W')
-        Label(systemAttributes, text=dynamicalSystem.massFP).grid(row=1, column=1, padx=5, sticky='W')
-        Label(systemAttributes, text="kg").grid(row=1, column=2, padx=5)
+        Label(systemAttributes, text="%e kg" % (dynamicalSystem.massFP)).grid(row=1, column=1, padx=5, sticky='E')
         # second primary
         Label(systemAttributes, text="Second Primary:").grid(row=2, column=0, padx=5, sticky='W')
-        Label(systemAttributes, text=dynamicalSystem.nameSP).grid(row=2, column=1, padx=5, sticky='W')
+        Label(systemAttributes, text=dynamicalSystem.nameSP).grid(row=2, column=1, padx=5, sticky='E')
         Label(systemAttributes, text="Mass of " + dynamicalSystem.nameSP + ":").grid(row=3, column=0, padx=5,
                                                                                      sticky='W')
-        Label(systemAttributes, text=dynamicalSystem.massSP).grid(row=3, column=1, padx=5, sticky='W')
-        Label(systemAttributes, text="kg").grid(row=3, column=2, padx=5)
+        Label(systemAttributes, text="%e kg" % (dynamicalSystem.massSP)).grid(row=3, column=1, padx=5, sticky='E')
         # distance between primaries
         Label(systemAttributes, text="Distance:").grid(row=4, column=0, padx=5, sticky='W')
-        Label(systemAttributes, text=dynamicalSystem.distance / 1.0e3).grid(row=4, column=1, padx=5, sticky='W')
-        Label(systemAttributes, text="km").grid(row=4, column=2, padx=5)
+        Label(systemAttributes, text="%.0f km" % (dynamicalSystem.distance/1.0e3)).grid(row=4, column=1, padx=5, sticky='E')
         # plot options
         plotOptions = LabelFrame(frameRight, text=" PLOT CONFIGURATION ")
-        plotOptions.pack(fill=BOTH, expand=True, pady=8)
+        plotOptions.pack(fill=BOTH, expand=True, pady=(0, 10))
         Label(plotOptions, text="Invariant Manifolds:").grid(row=0, column=0, columnspan=3, padx=5, sticky='W')
         self.stable = IntVar(value=0)
         self.unstable = IntVar(value=0)
@@ -551,18 +560,29 @@ class OrbitPage(Frame):
                command=lambda: OrbitPage.saveButton(self, orbit, dynamicalSystem)).grid(row=5, column=3, columnspan=3, padx=5, sticky='E')
         # commands
         actions = LabelFrame(frameRight, text=" COMMANDS ")
-        actions.pack(fill=BOTH, expand=True)
+        actions.pack(fill=BOTH, expand=True, pady=(0, 10))
         # button to search for closest NRHO
-        Button(actions, text="Get closest NRHO",
-                command=lambda: OrbitPage.getClosestNRHO(self, plotFrame, orbit, dynamicalSystem)).grid(row=0, column=0, columnspan=3, padx=5, sticky='W')
+        getNRHOButton = Button(actions, text="Get closest NRHO", command=lambda: OrbitPage.getClosestNRHO(self, plotFrame, orbit, dynamicalSystem))
+        getNRHOButton.pack(side=LEFT, padx=5)
         # button to plan transfer
-        Button(actions, text="Plan Transfer").grid(row=0, column=3, columnspan=3, padx=5, sticky='W')
-        # back to home
-        Button(actions, text="Home", command=lambda: controller.show_frame("StartPage")).grid(row=1, column=0, padx=5, sticky='W')
+        planTransferButton = Button(actions, text="Plan Transfer")
+        planTransferButton.pack(side=RIGHT, padx=5)
+        # status frame
+        statusFrame = Frame(frameRight)
+        statusFrame.pack(fill=X, side=BOTTOM)
+        statusLabel = Label(statusFrame, text="Status:")
+        statusLabel.config(font=("TkDefaultFont", 11))
+        statusLabel.pack(side=LEFT, padx=(5,2))
+        self.status = Label(statusFrame)
+        self.status.config(font=("TkDefaultFont", 11))
+        self.status.pack(side=LEFT, fill=X)
+        Button(statusFrame, text="Home", command=lambda: [Window.centerWindow(controller, 700, 500), controller.show_frame("StartPage")]).pack(side=RIGHT, padx=5)
         # plots
         plotFrame = LabelFrame(frameLeft, text=" ORBIT PLOTS ")
         plotFrame.pack(fill=BOTH, expand=True)
         self.plot(plotFrame, orbit, dynamicalSystem)
+        Window.fullScreen(controller)
+
 
     # opens input frame for configuration of what should be saved
     def saveButton(self, orbit, dynamicalSystem):
@@ -578,7 +598,6 @@ class OrbitPage(Frame):
         Checkbutton(self.saveLevel, text="xyz-Projection", variable=self.yz, onvalue=1, offvalue=0).grid(row=4, sticky='W', padx=5, pady=2)
         Checkbutton(self.saveLevel, text="xy-Projection", variable=self.xy, onvalue=1, offvalue=0).grid(row=5, sticky='W', padx=5, pady=2)
         Button(self.saveLevel, text="Confirm", command=lambda: OrbitPage.saveData(self, orbit, dynamicalSystem)).grid(row=19, column=0, sticky='W')
-
 
     # saves data
     def saveData(self, orbit, dynamicalSystem):
@@ -639,6 +658,8 @@ class OrbitPage(Frame):
         self.NRHOLabel.config(text=text)
 
     def getClosestNRHO(self, plotFrame, orbit, dynamicalSystem):
+        self.status.config(text="Searching for closest NRHO ...")
+        self.status.update()
         var = IntVar()
         if abs(orbit.x0[2]) < 1.0e-4:
             self.NRHOLevel = Toplevel()
@@ -690,9 +711,10 @@ class OrbitPage(Frame):
         # checks if manifolds need to be recalculated
         if ((self.stable.get() or self.unstable.get()) and orbit.stableManifolds is None) or (
                 (self.stable.get() or self.unstable.get()) and inputChange):
+            self.status.config(text="Calculating invariant Manifolds ...")
+            self.status.update()
             # calculates initial states of (un)stable manifolds
-            orbit.stableManifold(numberOfPoints=numberOfManifolds)
-            orbit.unstableManifold(numberOfPoints=numberOfManifolds)
+            orbit.invariantManifolds(numberOfPoints=numberOfManifolds)
             # declares arrays
             self.xStableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
             self.yStableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
@@ -702,7 +724,6 @@ class OrbitPage(Frame):
             self.zUnstableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
             # integrates all states of (un)stable manifolds and stores data
             t = np.linspace(0, durationFactor * orbit.period, num=int(durationFactor*50))
-            print(int(durationFactor*50))
             for i in range(numberOfManifolds):
                 stableManifold = odeint(Utility.backwards, orbit.stableManifolds[i], t, args=(dynamicalSystem.mu,),
                                         rtol=2.5e-13, atol=1e-22)
@@ -714,6 +735,10 @@ class OrbitPage(Frame):
                 self.xUnstableManifold[i, :] = unstableManifold[:, 0] * dynamicalSystem.distance
                 self.yUnstableManifold[i, :] = unstableManifold[:, 1] * dynamicalSystem.distance
                 self.zUnstableManifold[i, :] = unstableManifold[:, 2] * dynamicalSystem.distance
+            self.status.config(text="")
+            self.status.update()
+        self.status.config(text="Plotting Data ...")
+        self.status.update()
         # integrates initial state of orbit and stores data
         t = np.linspace(0, orbit.period, num=300)
         orbitStates = odeint(Utility.sysEquations, orbit.x0, t, args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
@@ -721,7 +746,7 @@ class OrbitPage(Frame):
         self.yOrbit = orbitStates[:, 1] * dynamicalSystem.distance
         self.zOrbit = orbitStates[:, 2] * dynamicalSystem.distance
         # sets xz-projection
-        self.fig1 = plt.figure(figsize=(3.2, 3.2))
+        self.fig1 = plt.figure(figsize=(3.5, 3.5))
         plt.axis("equal")
         self.canvas = FigureCanvasTkAgg(self.fig1, master=framefig1)
         self.canvas._tkcanvas.pack(expand=False)
@@ -743,7 +768,7 @@ class OrbitPage(Frame):
         if self.L2.get():
             plt.scatter(lagrangianPosition[1] * dynamicalSystem.distance, 0, color='blue', s=1)
         # sets yz-projection
-        self.fig2 = plt.figure(figsize=(3.2, 3.2))
+        self.fig2 = plt.figure(figsize=(3.5, 3.5))
         plt.axis("equal")
         self.canvas = FigureCanvasTkAgg(self.fig2, master=framefig2)
         self.canvas._tkcanvas.pack(expand=False)
@@ -765,7 +790,7 @@ class OrbitPage(Frame):
         if self.L2.get():
             plt.scatter(0, 0, color='blue', s=1)
         # sets xy-projection
-        self.fig3 = plt.figure(figsize=(3.2, 3.2))
+        self.fig3 = plt.figure(figsize=(3.5, 3.5))
         plt.axis("equal")
         self.canvas = FigureCanvasTkAgg(self.fig3, master=framefig3)
         self.canvas._tkcanvas.pack(expand=False)
@@ -787,7 +812,7 @@ class OrbitPage(Frame):
         if self.L2.get():
             plt.scatter(lagrangianPosition[1] * dynamicalSystem.distance, 0, color='blue', s=1)
         # sets 3d figure
-        self.fig4 = plt.figure(figsize=(3.2, 3.2))
+        self.fig4 = plt.figure(figsize=(3.5, 3.5))
         self.canvas = FigureCanvasTkAgg(self.fig4, master=framefig4)
         self.canvas._tkcanvas.pack(expand=False)
         ax = Axes3D(self.fig4)
@@ -810,12 +835,13 @@ class OrbitPage(Frame):
         if self.L2.get():
             ax.scatter(lagrangianPosition[1] * dynamicalSystem.distance, 0, 0, color='blue', s=1)
         Plot.setAxesEqual(ax)
+        self.status.config(text="")
+        self.status.update()
 
 
 class test(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        print("INTI")
         self.init_window(controller)
 
     def init_window(self, controller):
