@@ -43,10 +43,16 @@ class NumericalMethods:
 
     # differential corrections method
     @staticmethod
-    def diffCorrections(x, mu, epsilon, tau=None, fixedValue=None):
+    def diffCorrections(x, mu, epsilon, fixedValue, tau=None, returnData=False):
+
+        if tau is None:
+            try:
+                tau = Utility.halfPeriod(x, mu, 1.0e-11)
+            except ValueError:
+                raise ValueError
 
         # time variable differential corrections method with no fixed value
-        if fixedValue is None and tau is not None:
+        if fixedValue == "None":
             # declares and initializes constraint vector
             constraints = np.ones((3, 1))
             # declares and initializes counter for counting updates of initial state
@@ -78,25 +84,21 @@ class NumericalMethods:
                 x = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
                 # sets T/2 of updated initial conditions
                 tau = xIter[3]
-                counter = counter + 1
             # stores initial state
             outX = x
             # stores period
             outTime = tau
-            # output data includes STM and others for pseudo-arclength continuation
-            outData = np.array([outX, outTime, phi, xRef, xdot, freeVariables, DF])
+            if returnData:
+                # output data includes STM and others for pseudo-arclength continuation
+                outData = np.array([outX, outTime, phi, xRef, xdot, freeVariables, DF])
+            else:
+                # stores the initial state and period in output vector
+                outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
 
             return outData
 
-        # differential corrections method with one fixed value
-        elif fixedValue is not None and tau is None:
-            # prints status update
-            print("        Differential Corrections Method for adaption of the initial state...")
-            # calculates T/2 by integrating until y changes sign
-            try:
-                tau = Utility.halfPeriod(x, mu, 1.0e-11)
-            except ValueError:
-                raise ValueError
+        # differential corrections method with fixed x-amplitude
+        elif fixedValue == "x":
             # integrates initial state from 0 to tau
             t = np.linspace(0, tau, num=200000)
             xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
@@ -106,75 +108,36 @@ class NumericalMethods:
             counter = 0
             outX = x
             outTime = tau
-
-            # case of x-amplitude being the fixed variable
-            if fixedValue == "x":
-
-                # constraints are corrected until they meet a defined margin of error
-                while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 10:
-                        print("        Differential Corrections Method did not converge.")
-                        raise ValueError
-                    else:
-                        counter = counter + 1
-                    # calculates the state transition matrix
-                    phi = Utility.stm(x, tau, mu)
-                    # integrates initial state from 0 to tau
-                    t = np.linspace(0, tau, num=200000)
-                    xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
-                    # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
-                    # declares and initializes free variable vector with z, ydot and time
-                    freeVariables = np.array([x[2], x[4], tau])
-                    # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
-                    # calculates corrections to the initial state to meet a defined margin of error
-                    D = np.array([[phi[1, 2], phi[1, 4], xdot[1]],
-                                  [phi[3, 2], phi[3, 4], xdot[3]],
-                                  [phi[5, 2], phi[5, 4], xdot[5]]])
-                    DF = np.linalg.inv(D)
-                    xIter = freeVariables - DF.dot(constraints)
-                    # sets the updated initial condition vector
-                    x = np.array([x[0], 0, xIter[0], 0, xIter[1], 0])
-                    # calculates T/2 with updated initial conditions
-                    tau = xIter[2]
-                    outX = x
-                    outTime = tau
-
-            # case of z-amplitude being the fixed variable
-            elif fixedValue == "z":
-
-                # constraints are corrected until they meet a defined margin of error
-                while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                    if counter > 10:
-                        print("        Differential Corrections Method did not converge.")
-                        raise ValueError
-                    else:
-                        counter = counter + 1
-                    # calculates the state transition matrix
-                    phi = Utility.stm(x, tau, mu)
-                    # integrates initial state from 0 to tau
-                    t = np.linspace(0, tau, num=200000)
-                    xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
-                    # calculates the derivation of the state at T/2
-                    xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
-                    # declares and initializes free variable vector with x, ydot and time
-                    freeVariables = np.array([x[0], x[4], tau])
-                    # declares and initializes the constraint vector with y, xdot and zdot
-                    constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
-                    # calculates corrections to the initial state to meet a defined margin of error
-                    D = np.array([[phi[1, 0], phi[1, 4], xdot[1]],
-                                  [phi[3, 0], phi[3, 4], xdot[3]],
-                                  [phi[5, 0], phi[5, 4], xdot[5]]])
-                    DF = np.linalg.inv(D)
-                    xIter = freeVariables - DF.dot(constraints)
-                    # sets the updated initial condition vector
-                    x = np.array([xIter[0], 0, x[2], 0, xIter[1], 0])
-                    # calculates T/2 with updated initial conditions
-                    tau = xIter[2]
-                    outX = x
-                    outTime = tau
-
+            # constraints are corrected until they meet a defined margin of error
+            while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
+                if counter > 10:
+                    print("        Differential Corrections Method did not converge.")
+                    raise ValueError
+                else:
+                    counter = counter + 1
+                # calculates the state transition matrix
+                phi = Utility.stm(x, tau, mu)
+                # integrates initial state from 0 to tau
+                t = np.linspace(0, tau, num=200000)
+                xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+                # calculates the derivation of the state at T/2
+                xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
+                # declares and initializes free variable vector with z, ydot and time
+                freeVariables = np.array([x[2], x[4], tau])
+                # declares and initializes the constraint vector with y, xdot and zdot
+                constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+                # calculates corrections to the initial state to meet a defined margin of error
+                D = np.array([[phi[1, 2], phi[1, 4], xdot[1]],
+                              [phi[3, 2], phi[3, 4], xdot[3]],
+                              [phi[5, 2], phi[5, 4], xdot[5]]])
+                DF = np.linalg.inv(D)
+                xIter = freeVariables - DF.dot(constraints)
+                # sets the updated initial condition vector
+                x = np.array([x[0], 0, xIter[0], 0, xIter[1], 0])
+                # calculates T/2 with updated initial conditions
+                tau = xIter[2]
+                outX = x
+                outTime = tau
             # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
             # prints status updates
@@ -186,8 +149,157 @@ class NumericalMethods:
 
             return outData
 
-        else:
-            print("Input parameters not correct.")
+        # differential corrections method with fixed z-amplitude
+        elif fixedValue == "z":
+            # integrates initial state from 0 to tau
+            t = np.linspace(0, tau, num=200000)
+            xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+            # declares and initializes the constraint vector with y, xdot and zdot
+            constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+            # declares and initializes counter
+            counter = 0
+            outX = x
+            outTime = tau
+            # constraints are corrected until they meet a defined margin of error
+            while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
+                if counter > 10:
+                    print("        Differential Corrections Method did not converge.")
+                    raise ValueError
+                else:
+                    counter = counter + 1
+                # calculates the state transition matrix
+                phi = Utility.stm(x, tau, mu)
+                # integrates initial state from 0 to tau
+                t = np.linspace(0, tau, num=200000)
+                xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+                # calculates the derivation of the state at T/2
+                xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
+                # declares and initializes free variable vector with x, ydot and time
+                freeVariables = np.array([x[0], x[4], tau])
+                # declares and initializes the constraint vector with y, xdot and zdot
+                constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+                # calculates corrections to the initial state to meet a defined margin of error
+                D = np.array([[phi[1, 0], phi[1, 4], xdot[1]],
+                              [phi[3, 0], phi[3, 4], xdot[3]],
+                              [phi[5, 0], phi[5, 4], xdot[5]]])
+                DF = np.linalg.inv(D)
+                xIter = freeVariables - DF.dot(constraints)
+                # sets the updated initial condition vector
+                x = np.array([xIter[0], 0, x[2], 0, xIter[1], 0])
+                # calculates T/2 with updated initial conditions
+                tau = xIter[2]
+                outX = x
+                outTime = tau
+            # stores the initial state and period in output vector
+            outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
+            # prints status updates
+            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
+                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
+            print(
+                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
+                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
+
+            return outData
+
+
+        # differential corrections method with fixed dy/dt
+        elif fixedValue == "dy/dt":
+            # integrates initial state from 0 to tau
+            t = np.linspace(0, tau, num=200000)
+            xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+            # declares and initializes the constraint vector with y, xdot and zdot
+            constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+            # declares and initializes counter
+            counter = 0
+            outX = x
+            outTime = tau
+            # constraints are corrected until they meet a defined margin of error
+            while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
+                if counter > 10:
+                    print("        Differential Corrections Method did not converge.")
+                    raise ValueError
+                else:
+                    counter = counter + 1
+                # calculates the state transition matrix
+                phi = Utility.stm(x, tau, mu)
+                # integrates initial state from 0 to tau
+                t = np.linspace(0, tau, num=200000)
+                xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+                # calculates the derivation of the state at T/2
+                xdot = Utility.sysEquations(xRef[-1, :], 0, mu)
+                # declares and initializes free variable vector with x, z and time
+                freeVariables = np.array([x[0], x[2], tau])
+                # declares and initializes the constraint vector with y, xdot and zdot
+                constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+                # calculates corrections to the initial state to meet a defined margin of error
+                D = np.array([[phi[1, 0], phi[1, 2], xdot[1]],
+                              [phi[3, 0], phi[3, 2], xdot[3]],
+                              [phi[5, 0], phi[5, 2], xdot[5]]])
+                DF = np.linalg.inv(D)
+                xIter = freeVariables - DF.dot(constraints)
+                # sets the updated initial condition vector
+                x = np.array([xIter[0], 0, xIter[1], 0, x[4], 0])
+                # calculates T/2 with updated initial conditions
+                tau = xIter[2]
+                outX = x
+                outTime = tau
+            # stores the initial state and period in output vector
+            outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
+            # prints status updates
+            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
+                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
+            print(
+                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
+                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
+
+            return outData
+
+        # differential corrections method with fixed period
+        elif fixedValue == "Period":
+            # integrates initial state from 0 to tau
+            t = np.linspace(0, tau, num=200000)
+            xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+            # declares and initializes the constraint vector with y, xdot and zdot
+            constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+            # declares and initializes counter
+            counter = 0
+            outX = x
+            outTime = tau
+            # constraints are corrected until they meet a defined margin of error
+            while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
+                if counter > 10:
+                    print("        Differential Corrections Method did not converge.")
+                    raise ValueError
+                else:
+                    counter = counter + 1
+                # calculates the state transition matrix
+                phi = Utility.stm(x, tau, mu)
+                # integrates initial state from 0 to tau
+                t = np.linspace(0, tau, num=200000)
+                xRef = odeint(Utility.sysEquations, x, t, args=(mu,))
+                # declares and initializes free variable vector with x, z and dy/dt
+                freeVariables = np.array([x[0], x[2], x[4]])
+                # declares and initializes the constraint vector with y, xdot and zdot
+                constraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5]])
+                # calculates corrections to the initial state to meet a defined margin of error
+                D = np.array([[phi[1, 0], phi[1, 2], phi[1, 4]],
+                              [phi[3, 0], phi[3, 2], phi[3, 4]],
+                              [phi[5, 0], phi[5, 2], phi[5, 4]]])
+                DF = np.linalg.inv(D)
+                xIter = freeVariables - DF.dot(constraints)
+                # sets the updated initial condition vector
+                x = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])
+                outX = x
+            # stores the initial state and period in output vector
+            outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
+            # prints status updates
+            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
+                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
+            print(
+                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
+                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
+
+            return outData
 
 
 class Utility:

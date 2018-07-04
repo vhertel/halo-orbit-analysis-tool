@@ -9,20 +9,36 @@ Computation of halo orbits
 # Imports
 from GUI import HaloTool
 import matplotlib as mpl
+
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 from Utility import System, Utility, Plot
-from Orbit import Orbit
+from Orbit import Orbit, InitialGuess
 from scipy.integrate import odeint
+
 
 
 app = HaloTool()
 app.mainloop()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # # Initial Conditions
-# test = np.array([8.23390186e-01, 0, 0, 0, 1.26668772e-01, 0])
 # l1 = np.array([0.8233901862, 0, -0.0029876370, 0, 0.1264751431, 0])
 # l1_middle = np.array([0.8235990912, 0, -0.0399866715, 0, 0.1492106867, 0])
 # l2 = np.array([1.1808881373, 0, -0.0032736457, 0, -0.1559184478, 0])
@@ -30,17 +46,20 @@ app.mainloop()
 #
 # earth_moon = System(nameFP="Earth", massFP=5.97237e+24, nameSP="Moon", massSP=7.342e+22, distance=384402 * 1.0e3)
 #
-# o = Orbit(l2, "x", earth_moon)
-# o.getClosestNRHO()
+# o = Orbit(l1, 1, earth_moon)
+# print(l1)
+# print(o.x0)
+#
+# o.getClosestNRHO(direction=0)
+# print(o.x0)
+#
 # fig = plt.figure()
 # ax = fig.gca(projection='3d')
-# t = np.linspace(0, 1.25*o.period, num=300)
-# orbitStates = odeint(Utility.sysEquations, o.x0, t, args=(o.system.mu,), rtol=2.5e-13, atol=1e-22)
-# xOrbit = orbitStates[:, 0]
-# yOrbit = orbitStates[:, 1]
-# zOrbit = orbitStates[:, 2]
-# ax.plot(xOrbit, yOrbit, zOrbit, color='black', linewidth=1)
-# ax.scatter((1 - o.system.mu), 0, 0, color='grey', s=1, label="Moon")
-# #ax.scatter((-o.system.mu), 0, 0, color='blue', s=3, label="Moon")
+# t = np.linspace(0, o.period, num=10000)
+# halo = odeint(Utility.sysEquations, o.x0, t, args=(earth_moon.mu,))
+# x = halo[:, 0]
+# y = halo[:, 1]
+# z = halo[:, 2]
+# ax.plot(x, y, z, color='blue', linewidth=0.5)
 # Plot.setAxesEqual(ax)
 # plt.show()

@@ -19,15 +19,13 @@ class OrbitFamily:
     dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
     # initializes by setting attributes and checking for the lagrangian
-    def __init__(self, x0, system, orbitNumber=None):
+    def __init__(self, x0, system):
+        # dynamical system
+        self.system = system
         # initial guess of input orbit
         self.x0 = x0
         # distance between orbits
-        self.orbitDistance = 0.0005
-        # dynamical system
-        self.system = system
-        # number of orbits to be calculated
-        self.orbitNumber = orbitNumber
+        self.orbitDistance = 0.007
         # sets data for writing and plotting
         self.familyData = None
         # checks for lagrangian
@@ -38,15 +36,8 @@ class OrbitFamily:
         else:
             print("Lagrangian type could not be determined.")
             self.lagrangian = None
-
-    # calculates halo family using the natural parameter continuation
-    def getHaloFamily(self):
-        # checks if attribute orbitNumber has been passed
-        if self.orbitNumber is None:
-            print("Orbit Number is not given.")
-            exit()
         # prints status update
-        print("STATUS: Generation of a family of %d Halo Orbits around %s...\n" % (self.orbitNumber, self.lagrangian))
+        print("STATUS: Generation of a family of Halo Orbits around %s...\n" % (self.lagrangian))
         # natural parameter continuation
         OrbitContinuation.natParaConti(self)
         # prints status update
@@ -86,7 +77,7 @@ class OrbitFamily:
                      "ORBIT NUMBER             =      %d\n"
                      "ORBIT DISTANCE           =      %f\n"
                      "META_STOP\n\n" % (self.system.nameFP, self.system.massFP, self.system.nameSP, self.system.massSP,
-                                        self.system.distance, self.system.mu, self.lagrangian, self.orbitNumber,
+                                        self.system.distance, self.system.mu, self.lagrangian, len(self.familyData),
                                         self.orbitDistance))
         # writes orbit data
         output.write("DATA_START\n")
@@ -125,9 +116,7 @@ class OrbitContinuation:
             # creates orbit object
             orbit = Orbit(x_n, "z", family.system, comment=False)
             # checks if error occurred during orbit instantiation
-            if Orbit.error is True:
-                # updates number of orbits to number of calculated orbits
-                family.orbitNumber = len(output)
+            if orbit.error is True:
                 # sets output data
                 family.familyData = output
                 return
@@ -172,9 +161,8 @@ class OrbitContinuation:
                 # calculates initial state of next orbit
                 orbit = Orbit(x_n, "x", family.system, comment=False)
                 # checks if error occurred during orbit instantiation
-                if Orbit.error is True:
-                    # updates number of orbits to number of calculated orbits
-                    family.orbitNumber = len(output)
+                if orbit.error is True:
+                    stopLoop = True
                     # sets output data
                     family.familyData = output
                     return
@@ -202,9 +190,8 @@ class OrbitContinuation:
                 # calculates initial state of next orbit
                 orbit = Orbit(x_n, "z", family.system, comment=False)
                 # checks if error occurred during orbit instantiation
-                if Orbit.error is True:
-                    # updates number of orbits to number of calculated orbits
-                    family.orbitNumber = len(output)
+                if orbit.error is True:
+                    stopLoop = True
                     # sets output data
                     family.familyData = output
                     return
@@ -220,11 +207,6 @@ class OrbitContinuation:
                 orbit.getStability()
                 if not orbit.NRHO:
                     # sets stop criteria when stability index out of range
-                    stopLoop = True
-            # increments counter until number of orbits is reached
-            else:
-                if i == (family.orbitNumber - 2):
-                    # sets stop criteria when number of orbits is reached
                     stopLoop = True
             # increments counter
             i += 1
