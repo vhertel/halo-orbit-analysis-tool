@@ -19,23 +19,20 @@ class OrbitFamily:
     dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
 
     # initializes by setting attributes and checking for the lagrangian
-    def __init__(self, x0, system):
+    def __init__(self, x0, direction, lagrangian, system):
         # dynamical system
         self.system = system
         # initial guess of input orbit
         self.x0 = x0
+        # family direction
+        self.direction = direction
+        print(direction)
+        # lagrangian
+        self.lagrangian = lagrangian
         # distance between orbits
-        self.orbitDistance = 0.007
+        self.orbitDistance = 0.0001
         # sets data for writing and plotting
         self.familyData = None
-        # checks for lagrangian
-        if x0[0] < 1:
-            self.lagrangian = "L1"
-        elif x0[0] > 1:
-            self.lagrangian = "L2"
-        else:
-            print("Lagrangian type could not be determined.")
-            self.lagrangian = None
         # prints status update
         print("STATUS: Generation of a family of Halo Orbits around %s...\n" % (self.lagrangian))
         # natural parameter continuation
@@ -110,11 +107,11 @@ class OrbitContinuation:
         # initial guess of input orbit
         x_n = family.x0
         # prints status update
-        print("        Orbit Number: 1    (fixed z-value)")
+        print("        Orbit Number: 1    (fixed x-value)")
         # calculates first two orbits
         for i in range(2):
             # creates orbit object
-            orbit = Orbit(x_n, "z", family.system, comment=False)
+            orbit = Orbit(x_n, "x", family.system, comment=False)
             # checks if error occurred during orbit instantiation
             if orbit.error is True:
                 # sets output data
@@ -128,7 +125,10 @@ class OrbitContinuation:
                 # sets output data
                 output = orbit.data
                 # modifies initial state to initial guess of second orbit
-                x_n = outX - np.array([0, 0, 0.0001, 0, 0, 0])
+                if family.direction == "Northern":
+                    x_n = outX + np.array([0, 0, 0.0001, 0, 0, 0])
+                else:
+                    x_n = outX - np.array([0, 0, 0.0001, 0, 0, 0])
                 # prints status update
                 print("        Reference Orbit:")
             else:
@@ -183,10 +183,10 @@ class OrbitContinuation:
                 if math.isnan(stepSize):
                     stepSize = family.orbitDistance / 2
                 # generates next initial guess depending on continuation direction
-                if family.lagrangian == "L1":
+                if family.direction == "Northern":
                     x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
-                elif family.lagrangian == "L2":
-                    x_n = outX - np.array([0, 0, stepSize, 0, 0, 0])
+                else:
+                    x_n = outX + np.array([0, 0, stepSize, 0, 0, 0])
                 # calculates initial state of next orbit
                 orbit = Orbit(x_n, "z", family.system, comment=False)
                 # checks if error occurred during orbit instantiation

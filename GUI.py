@@ -4,7 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from tkinter import *
 from tkinter import filedialog, ttk
-from Utility import Utility, System, Plot
+from Utility import Utility, System, Plot, NumericalMethods
 from Orbit import Orbit, InitialGuess
 from OrbitFamily import OrbitFamily
 import numpy as np
@@ -45,7 +45,7 @@ class HaloTool(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         Tk.wm_title(self, "HALO TOOL")
-        Window.centerWindow(self, 800, 500)
+        Window.centerWindow(self, 700, 600)
         container = Frame(self)
         container.pack(side="left", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -269,16 +269,24 @@ class SystemPage(Frame):
 
     # confirms and stores data from entry
     def confirm(self, parent, controller):
-        nameFP = self.nameFPEntry.get()
-        massFP = float(self.massFPEntry.get())
-        nameSP = self.nameSPEntry.get()
-        massSP = float(self.massSPEntry.get())
-        distance = float(self.distanceEntry.get())
-        dynamicalSystem = System(nameFP=nameFP, massFP=massFP, nameSP=nameSP, massSP=massSP, distance=distance)
-        controller.frames["NewInstance"] = NewInstance(parent=parent, controller=controller,
-                                                       dynamicalSystem=dynamicalSystem)
-        controller.frames["NewInstance"].grid(row=0, column=0, sticky="nsew")
-        controller.show_frame("NewInstance")
+        try:
+            nameFP = self.nameFPEntry.get()
+            massFP = float(self.massFPEntry.get())
+            nameSP = self.nameSPEntry.get()
+            massSP = float(self.massSPEntry.get())
+            distance = float(self.distanceEntry.get())
+        except ValueError:
+            self.nameFPEntry.config(highlightbackground='red')
+            self.massFPEntry.config(highlightbackground='red')
+            self.nameSPEntry.config(highlightbackground='red')
+            self.massSPEntry.config(highlightbackground='red')
+            self.distanceEntry.config(highlightbackground='red')
+        else:
+            dynamicalSystem = System(nameFP=nameFP, massFP=massFP, nameSP=nameSP, massSP=massSP, distance=distance)
+            controller.frames["NewInstance"] = NewInstance(parent=parent, controller=controller,
+                                                           dynamicalSystem=dynamicalSystem)
+            controller.frames["NewInstance"].grid(row=0, column=0, sticky="nsew")
+            controller.show_frame("NewInstance")
 
 
 # page for creating new instance
@@ -314,31 +322,32 @@ class NewInstance(Frame):
 
 # page for orbit details
 class OrbitInputPage(Frame):
+
     def __init__(self, parent, controller, dynamicalSystem):
         Frame.__init__(self, parent)
         # initial state
+        self.guessState = np.zeros(6)
         stateFrame = LabelFrame(self, text=" INITIAL STATE ")
-        stateFrame.grid(row=0, columnspan=7, sticky='W', padx=5, pady=5, ipadx=5, ipady=5)
+        stateFrame.grid(row=0, columnspan=2, sticky='W', padx=5, pady=5, ipadx=5, ipady=5)
         Label(stateFrame, text="Input of Initial Guess:").grid(row=0, column=0, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="x").grid(row=1, column=0, sticky='W', padx=5, pady=2)
         self.xEntry = Entry(stateFrame)
-        self.xEntry.grid(row=1, column=1, columnspan=2, sticky='W', padx=5, pady=2)
+        self.xEntry.grid(row=1, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="y").grid(row=2, column=0, sticky='W', padx=5, pady=2)
         self.yEntry = Entry(stateFrame)
-        self.yEntry.grid(row=2, column=1, columnspan=2, sticky='W', padx=5, pady=2)
+        self.yEntry.grid(row=2, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="z").grid(row=3, column=0, sticky='W', padx=5, pady=2)
         self.zEntry = Entry(stateFrame)
-        self.zEntry.grid(row=3, column=1, columnspan=2, sticky='W', padx=5, pady=2)
+        self.zEntry.grid(row=3, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="dx/dt").grid(row=4, column=0, sticky='W', padx=5, pady=2)
         self.dxEntry = Entry(stateFrame)
-        self.dxEntry.grid(row=4, column=1, columnspan=2, sticky='W', padx=5, pady=2)
+        self.dxEntry.grid(row=4, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="dy/dt").grid(row=5, column=0, sticky='W', padx=5, pady=2)
         self.dyEntry = Entry(stateFrame)
-        self.dyEntry.grid(row=5, column=1, columnspan=2, sticky='W', padx=5, pady=2)
+        self.dyEntry.grid(row=5, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="dz/dt").grid(row=6, column=0, sticky='W', padx=5, pady=2)
         self.dzEntry = Entry(stateFrame)
-        self.dzEntry.grid(row=6, column=1, columnspan=2, sticky='W', padx=5, pady=2)
-
+        self.dzEntry.grid(row=6, column=1, sticky='W', padx=5, pady=2)
         Label(stateFrame, text="Fixed value:").grid(row=7, column=0, columnspan=2, sticky='W', padx=5, pady=(15, 0))
         self.fixedValue = ('x', 'z', 'dy/dt', 'Period', 'None')
         self.fixedValueCB = ttk.Combobox(stateFrame, state='readonly', values=self.fixedValue, justify='center', width=10)
@@ -347,12 +356,12 @@ class OrbitInputPage(Frame):
 
         # initial guess generation
         guessGeneration = LabelFrame(self, text=" INITIAL GUESS GENERATION ")
-        guessGeneration.grid(row=0, column=9, columnspan=2, rowspan=7, sticky='NS', padx=5, pady=5, ipadx=5, ipady=5)
+        guessGeneration.grid(row=0, column=2, columnspan=2, sticky='NS', padx=5, pady=5, ipadx=5, ipady=5)
 
-        var = IntVar()
-        Radiobutton(guessGeneration, text="L1 Planar Lyapunov Orbit", variable=var, value=0, command=lambda: [OrbitInputPage.customInput(self, "DISABLED"), OrbitInputPage.guessGenerator(self, dynamicalSystem, lyapunov=True, lagrangian="L1")]).grid(row=0, columnspan=2, sticky='W', padx=5, pady=2)
-        Radiobutton(guessGeneration, text="L2 Planar Lyapunov Orbit", variable=var, value=1, command=lambda: [OrbitInputPage.customInput(self, "DISABLED"), OrbitInputPage.guessGenerator(self, dynamicalSystem, lyapunov=True, lagrangian="L2")]).grid(row=1, columnspan=2, sticky='W', padx=5, pady=2)
-        Radiobutton(guessGeneration, text="Custom", variable=var, value=2, command=lambda: OrbitInputPage.customInput(self, "NORMAL")).grid(row=2, columnspan=2, sticky='W', padx=5, pady=2)
+        guessOption = IntVar()
+        Radiobutton(guessGeneration, text="L1 Planar Lyapunov Orbit", variable=guessOption, value=1, command=lambda: [OrbitInputPage.customInput(self, "DISABLED"), OrbitInputPage.guessGenerator(self, dynamicalSystem, lyapunov=True, lagrangian="L1")]).grid(row=0, columnspan=2, sticky='W', padx=5, pady=2)
+        Radiobutton(guessGeneration, text="L2 Planar Lyapunov Orbit", variable=guessOption, value=2, command=lambda: [OrbitInputPage.customInput(self, "DISABLED"), OrbitInputPage.guessGenerator(self, dynamicalSystem, lyapunov=True, lagrangian="L2")]).grid(row=1, columnspan=2, sticky='W', padx=5, pady=2)
+        Radiobutton(guessGeneration, text="Custom", variable=guessOption, value=3, command=lambda: OrbitInputPage.customInput(self, "NORMAL")).grid(row=2, columnspan=2, sticky='W', padx=5, pady=2)
 
         Label(guessGeneration, text="Lagrangian:").grid(row=3, sticky='W', padx=(27,5))
         self.lagrangian = ('L1', 'L2')
@@ -379,10 +388,36 @@ class OrbitInputPage(Frame):
         self.guessButton = Button(guessGeneration, text="Get Initial Guess", state=DISABLED, command=lambda: OrbitInputPage.guessGenerator(self, dynamicalSystem))
         self.guessButton.grid(row=7, sticky='W', padx=(27,5))
 
+        orbitOptions = LabelFrame(self, text=" ORBIT OPTIONS ")
+        orbitOptions.grid(row=1, column=0, columnspan=2, rowspan=4, sticky='WE', padx=5, pady=5, ipadx=5, ipady=5)
+        Label(orbitOptions, text="Accuracy:").grid(row=0, sticky='W', padx=5)
+        self.accuracyEntry = Entry(orbitOptions, width=7)
+        self.accuracyEntry.grid(row=0, column=1, sticky='W', padx=5, pady=2)
+        self.accuracy = 1.0e-8
+        self.accuracyEntry.insert(END, self.accuracy)
+
+        Label(orbitOptions, text="Max. Iterations:").grid(row=1, column=0, sticky='W', padx=5)
+        self.maxIterEntry = Entry(orbitOptions, width=7)
+        self.maxIterEntry.grid(row=1, column=1, sticky='E', padx=5, pady=2)
+        self.maxIter = 10
+        self.maxIterEntry.insert(END, self.maxIter)
+
+        Label(orbitOptions, text="NRHO Stability Criteria:").grid(row=2, column=0, sticky='W', padx=5)
+        self.stabilityCritEntry = Entry(orbitOptions, width=7)
+        self.stabilityCritEntry.grid(row=2, column=1, sticky='E', padx=5, pady=2)
+        self.stabilityCrit = 1
+        self.stabilityCritEntry.insert(END, self.stabilityCrit)
+
         # button for calculation of entry data
-        Button(self, text="Calculate", command=lambda: OrbitInputPage.calculate(self, parent, controller, dynamicalSystem)).grid(row=8, column=1, sticky='E', padx=5, pady=2)
-        # back to home
-        Button(self, text="Home", command=lambda: controller.show_frame("StartPage")).grid(row=8, column=0, sticky='W', padx=5, pady=2)
+        Button(self, text="Calculate", width=15, command=lambda: OrbitInputPage.calculate(self, parent, controller, dynamicalSystem)).grid(row=1, column=2, columnspan=2, sticky='SE', padx=5)
+        self.nextButton = Button(self, text="Next", width=15, state=DISABLED, command=lambda: OrbitInputPage.nextPage(self, parent, controller, dynamicalSystem))
+        self.nextButton.grid(row=2, column=2, columnspan=2, sticky='E', padx=5)
+        Button(self, text="Clear Prompt", width=15, command=lambda: [self.statusBar.delete(1.0,END), self.statusBar.insert(INSERT, time.strftime("%Y-%m-%dT%H.%M.%S:\n\n>>>"))]).grid(row=3, column=2, columnspan=2, sticky='NE', padx=5)
+        Button(self, text="Home", width=15, command=lambda: controller.show_frame("StartPage")).grid(row=4, column=2, columnspan=2, sticky='NE', padx=5)
+        Label(self, font=("TkDefaultFont", 11), text="Status:").grid(row=5, sticky='NW', padx=5, pady=(15,5))
+        self.statusBar = Text(self, height=7, relief=RIDGE, bd=3, spacing1=3)
+        self.statusBar.grid(row=5, column=1, columnspan=3, sticky='W', padx=5, pady=(15,5))
+        self.statusBar.insert(INSERT, time.strftime("%Y-%m-%dT%H.%M.%S:\n\n>>>"))
 
     def customInput(self, modus):
         if modus == "NORMAL":
@@ -398,39 +433,75 @@ class OrbitInputPage(Frame):
             self.guessValue.config(state=DISABLED)
             self.guessButton.config(state=DISABLED)
 
-
     def guessGenerator(self, dynamicalSystem, lyapunov=None, lagrangian=None):
-
-        if lyapunov:
-            guess = InitialGuess(dynamicalSystem, lagrangian, "Northern", "x", 0)
+        try:
+            if lyapunov:
+                guess = InitialGuess(dynamicalSystem, lagrangian, "Northern", "z", 0)
+            else:
+                guess = InitialGuess(dynamicalSystem, self.lagrangianCB.get(), self.familyCB.get(), self.inputValueCB.get(), float(self.guessValue.get()))
+            self.statusBar.insert(INSERT, "   Succesfully calculated Initial Guess.\n>>>")
+            self.statusBar.see(END)
+        except:
+            self.statusBar.insert(INSERT, "   Initial guess could not be calculated. Please check input parameters.\n>>>")
+            self.statusBar.see(END)
+            return
         else:
-            guess = InitialGuess(dynamicalSystem, self.lagrangianCB.get(), self.familyCB.get(), self.inputValueCB.get(), float(self.guessValue.get()))
-        self.xEntry.delete(0, "end")
-        self.yEntry.delete(0, "end")
-        self.zEntry.delete(0, "end")
-        self.dxEntry.delete(0, "end")
-        self.dyEntry.delete(0, "end")
-        self.dzEntry.delete(0, "end")
-        self.xEntry.insert(0, guess.x0[0])
-        self.yEntry.insert(0, guess.x0[1])
-        self.zEntry.insert(0, guess.x0[2])
-        self.dxEntry.insert(0, guess.x0[3])
-        self.dyEntry.insert(0, guess.x0[4])
-        self.dzEntry.insert(0, guess.x0[5])
+            self.guessState = guess.x0
+            self.guessPeriod = guess.tau
+            self.xEntry.delete(0, "end")
+            self.yEntry.delete(0, "end")
+            self.zEntry.delete(0, "end")
+            self.dxEntry.delete(0, "end")
+            self.dyEntry.delete(0, "end")
+            self.dzEntry.delete(0, "end")
+            self.xEntry.insert(0, guess.x0[0])
+            self.yEntry.insert(0, guess.x0[1])
+            self.zEntry.insert(0, guess.x0[2])
+            self.dxEntry.insert(0, guess.x0[3])
+            self.dyEntry.insert(0, guess.x0[4])
+            self.dzEntry.insert(0, guess.x0[5])
 
     # creates object with input state
     def calculate(self, parent, controller, dynamicalSystem):
-        x0 = np.array([float(self.xEntry.get()),
-                       float(self.yEntry.get()),
-                       float(self.zEntry.get()),
-                       float(self.dxEntry.get()),
-                       float(self.dyEntry.get()),
-                       float(self.dzEntry.get())])
-        orbit = Orbit(x0, self.fixedValueCB.get(), dynamicalSystem)
-        controller.frames["OrbitPage"] = OrbitPage(parent=parent, controller=controller, orbit=orbit,
-                                                   dynamicalSystem=dynamicalSystem)
-        controller.frames["OrbitPage"].grid(row=0, column=0, sticky="nsew")
-        controller.show_frame("OrbitPage")
+        try:
+            x0 = np.array([float(self.xEntry.get()),
+                           float(self.yEntry.get()),
+                           float(self.zEntry.get()),
+                           float(self.dxEntry.get()),
+                           float(self.dyEntry.get()),
+                           float(self.dzEntry.get())])
+
+            Orbit.setAccuracy(float(self.accuracyEntry.get()))
+            Orbit.setStabilityCriteria(float(self.stabilityCritEntry.get()))
+            NumericalMethods.setMaxIterations(float(self.maxIterEntry.get()))
+
+            if np.array_equal(x0, self.guessState):
+                self.orbit = Orbit(x0, self.fixedValueCB.get(), dynamicalSystem, self.statusBar, tau=self.guessPeriod)
+            else:
+                self.orbit = Orbit(x0, self.fixedValueCB.get(), dynamicalSystem, self.statusBar)
+            self.nextButton.config(state=NORMAL)
+        except ValueError:
+            self.statusBar.insert(INSERT, "   Input parameters are not complete.\n>>>")
+            self.statusBar.see(END)
+        except OverflowError:
+            self.statusBar.insert(INSERT, "          Orbit could not be calculated. Integrating Initial State did not lead\n"
+                                          "          to periodic orbit.\n>>>")
+            self.statusBar.see(END)
+        except StopIteration:
+            self.statusBar.insert(INSERT, "          Orbit could not be calculated. Differential Corrections Method did\n"
+                                          "          not converge.\n>>>")
+            self.statusBar.see(END)
+        except np.linalg.linalg.LinAlgError:
+            self.statusBar.insert(INSERT, "          Orbit could not be calculated. Transformation matrix could not be\n"
+                                          "          calculated because of singular matrix. Please fix another value.\n>>>")
+            self.statusBar.see(END)
+        else:
+            pass
+
+    def nextPage(self, parent, controller, dynamicalSystem):
+            controller.frames["OrbitPage"] = OrbitPage(parent=parent, controller=controller, orbit=self.orbit, dynamicalSystem=dynamicalSystem)
+            controller.frames["OrbitPage"].grid(row=0, column=0, sticky="nsew")
+            controller.show_frame("OrbitPage")
 
 
 # page for orbit familiy
@@ -438,77 +509,25 @@ class FamilyInputPage(Frame):
     def __init__(self, parent, controller, dynamicalSystem):
         Frame.__init__(self, parent)
         # initial state
-        stateFrame = LabelFrame(self, text=" INITIAL STATE ")
+        stateFrame = LabelFrame(self, text=" LAGRANGIAN ")
         stateFrame.grid(row=0, columnspan=7, sticky='W', padx=5, pady=5, ipadx=5, ipady=5)
-        Label(stateFrame, text="Input of Initial State").grid(row=0, column=0, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="X").grid(row=1, column=0, sticky='W', padx=5, pady=2)
-        self.xEntry = Entry(stateFrame)
-        self.xEntry.grid(row=1, column=1, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="Y").grid(row=2, column=0, sticky='W', padx=5, pady=2)
-        self.yEntry = Entry(stateFrame)
-        self.yEntry.grid(row=2, column=1, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="Z").grid(row=3, column=0, sticky='W', padx=5, pady=2)
-        self.zEntry = Entry(stateFrame)
-        self.zEntry.grid(row=3, column=1, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="XDOT").grid(row=4, column=0, sticky='W', padx=5, pady=2)
-        self.dxEntry = Entry(stateFrame)
-        self.dxEntry.grid(row=4, column=1, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="YDOT").grid(row=5, column=0, sticky='W', padx=5, pady=2)
-        self.dyEntry = Entry(stateFrame)
-        self.dyEntry.grid(row=5, column=1, sticky='W', padx=5, pady=2)
-        Label(stateFrame, text="ZDOT").grid(row=6, column=0, sticky='W', padx=5, pady=2)
-        self.dzEntry = Entry(stateFrame)
-        self.dzEntry.grid(row=6, column=1, sticky='W', padx=5, pady=2)
-        # initial guess generation
-        guessGeneration = LabelFrame(self, text=" INITIAL GUESS GENERATION ")
-        guessGeneration.grid(row=0, column=9, columnspan=2, rowspan=7, sticky='NS', padx=5, pady=5)
-        var = IntVar()
-        Radiobutton(guessGeneration, text="L1", variable=var, value=0, command=lambda: FamilyInputPage.l1(self)).grid(row=0, sticky='W', padx=5, pady=2)
-        Radiobutton(guessGeneration, text="L2", variable=var, value=1, command=lambda: FamilyInputPage.l2(self)).grid(row=2, sticky='W', padx=5, pady=2)
+        self.lagrangian = StringVar(value="L1")
+        Radiobutton(stateFrame, text="L1", variable=self.lagrangian, value="L1").grid(row=0, sticky='W', padx=5, pady=2)
+        Radiobutton(stateFrame, text="L2", variable=self.lagrangian, value="L2").grid(row=0, column=1, sticky='W', padx=5, pady=2)
+        self.family = StringVar(value="Northern")
+        Radiobutton(stateFrame, text="Northern", variable=self.family, value="Northern").grid(row=1, sticky='W', padx=5, pady=2)
+        Radiobutton(stateFrame, text="Southern", variable=self.family, value="Southern").grid(row=1, column=1, sticky='W', padx=5, pady=2)
+
         # button for calculation of entry data
         Button(self, text="Calculate", command=lambda: FamilyInputPage.calculate(self, parent, controller, dynamicalSystem)).grid(row=7, column=1, sticky='E', padx=5, pady=2)
         # back to home
         Button(self, text="Home", command=lambda: controller.show_frame("StartPage")).grid(row=7, column=0, sticky='W', padx=5, pady=2)
 
-    # default states for earth-moon system
-    def l1(self):
-        self.xEntry.delete(0, "end")
-        self.yEntry.delete(0, "end")
-        self.zEntry.delete(0, "end")
-        self.dxEntry.delete(0, "end")
-        self.dyEntry.delete(0, "end")
-        self.dzEntry.delete(0, "end")
-        self.xEntry.insert(0, 0.8233901862)
-        self.yEntry.insert(0, 0)
-        self.zEntry.insert(0, -0.0029876370)
-        self.dxEntry.insert(0, 0)
-        self.dyEntry.insert(0, 0.1264751431)
-        self.dzEntry.insert(0, 0)
-
-    def l2(self):
-        self.xEntry.delete(0, "end")
-        self.yEntry.delete(0, "end")
-        self.zEntry.delete(0, "end")
-        self.dxEntry.delete(0, "end")
-        self.dyEntry.delete(0, "end")
-        self.dzEntry.delete(0, "end")
-        self.xEntry.insert(0, 1.1808881373)
-        self.yEntry.insert(0, 0)
-        self.zEntry.insert(0, -0.0032736457)
-        self.dxEntry.insert(0, 0)
-        self.dyEntry.insert(0, -0.1559184478)
-        self.dzEntry.insert(0, 0)
-
     # creates object with input state
     def calculate(self, parent, controller, dynamicalSystem):
-        x0 = np.array([float(self.xEntry.get()),
-                       float(self.yEntry.get()),
-                       float(self.zEntry.get()),
-                       float(self.dxEntry.get()),
-                       float(self.dyEntry.get()),
-                       float(self.dzEntry.get())])
-        #orbitFamily = OrbitFamily(x0, dynamicalSystem)
-        controller.frames["OrbitFamilyPage"] = OrbitFamilyPage(parent=parent, controller=controller, initialState=x0, dynamicalSystem=dynamicalSystem)
+        guess = InitialGuess(dynamicalSystem, self.lagrangian.get(), self.family.get(), "z", 0)
+        orbitFamily = OrbitFamily(guess.x0, self.family.get(), self.lagrangian.get(), dynamicalSystem)
+        controller.frames["OrbitFamilyPage"] = OrbitFamilyPage(parent=parent, controller=controller, orbitFamily=orbitFamily, initialState=guess.x0, dynamicalSystem=dynamicalSystem)
         controller.frames["OrbitFamilyPage"].grid(row=0, column=0, sticky="nsew")
         controller.show_frame("OrbitFamilyPage")
 
@@ -645,7 +664,7 @@ class OrbitPage(Frame):
         self.status = Label(statusFrame)
         self.status.config(font=("TkDefaultFont", 11))
         self.status.pack(side=LEFT, fill=X)
-        Button(statusFrame, text="Home", command=lambda: [Window.centerWindow(controller, 800, 500), controller.show_frame("StartPage")]).pack(side=RIGHT, padx=5)
+        Button(statusFrame, text="Home", command=lambda: [Window.centerWindow(controller, 700, 600), controller.show_frame("StartPage")]).pack(side=RIGHT, padx=5)
         # plots
         plotFrame = LabelFrame(frameLeft, text=" ORBIT PLOTS ")
         plotFrame.pack(fill=BOTH, expand=True)
@@ -924,7 +943,7 @@ class OrbitPage(Frame):
 
 # detailed orbit page
 class OrbitFamilyPage(Frame):
-    def __init__(self, parent, controller, initialState, dynamicalSystem):
+    def __init__(self, parent, controller, orbitFamily, initialState, dynamicalSystem):
         Frame.__init__(self, parent)
         frameLeft = Frame(self)
         frameLeft.pack(fill=BOTH, expand=True, side=LEFT, padx=10, pady=10)
@@ -1036,16 +1055,16 @@ class OrbitFamilyPage(Frame):
         self.status = Label(statusFrame)
         self.status.config(font=("TkDefaultFont", 11))
         self.status.pack(side=LEFT, fill=X)
-        Button(statusFrame, text="Home", command=lambda: [Window.centerWindow(controller, 800, 500), controller.show_frame("StartPage")]).pack(side=RIGHT, padx=5)
+        Button(statusFrame, text="Home", command=lambda: [Window.centerWindow(controller, 700, 600), controller.show_frame("StartPage")]).pack(side=RIGHT, padx=5)
         # plots
         plotFrame = LabelFrame(frameLeft, text=" ORBIT PLOTS ")
         plotFrame.pack(fill=BOTH, expand=True)
         Window.fullScreen(controller)
 
-        orbit = Orbit(initialState, 1, dynamicalSystem)
-        orbitFamily = OrbitFamily(initialState, dynamicalSystem)
+        orbit = Orbit(initialState, "x", dynamicalSystem)
         self.updateAttributes(orbit, dynamicalSystem)
-        #self.plot(plotFrame, orbitFamily, dynamicalSystem)
+        #orbitFamily = OrbitFamily(initialState, dynamicalSystem)
+        self.plot(plotFrame, orbitFamily, dynamicalSystem)
 
 
     # opens input frame for configuration of what should be saved

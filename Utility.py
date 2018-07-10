@@ -8,6 +8,7 @@ Utility classes
 
 # Imports
 import numpy as np
+import tkinter as tk
 from scipy.integrate import odeint
 import os
 from numpy.linalg import svd
@@ -41,15 +42,17 @@ class System:
 
 class NumericalMethods:
 
+    MAX_ITERATIONS = 10
+
     # differential corrections method
     @staticmethod
-    def diffCorrections(x, mu, epsilon, fixedValue, tau=None, returnData=False):
+    def diffCorrections(x, mu, epsilon, fixedValue, tau=None, statusBar=None, returnData=False):
 
         if tau is None:
             try:
                 tau = Utility.halfPeriod(x, mu, 1.0e-11)
-            except ValueError:
-                raise ValueError
+            except OverflowError:
+                raise OverflowError
 
         # time variable differential corrections method with no fixed value
         if fixedValue == "None":
@@ -59,9 +62,8 @@ class NumericalMethods:
             counter = 1
             # constraints are corrected until they meet a defined margin of error
             while max(abs(constraints)) > epsilon:
-                if counter > 10:
-                    print("        Differential Corrections Method did not converge.")
-                    raise ValueError
+                if counter > NumericalMethods.MAX_ITERATIONS:
+                    raise StopIteration
                 else:
                     counter = counter + 1
                 # calculates the state transition matrix
@@ -95,8 +97,6 @@ class NumericalMethods:
                 # stores the initial state and period in output vector
                 outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
 
-            return outData
-
         # differential corrections method with fixed x-amplitude
         elif fixedValue == "x":
             # integrates initial state from 0 to tau
@@ -110,9 +110,8 @@ class NumericalMethods:
             outTime = tau
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                if counter > 10:
-                    print("        Differential Corrections Method did not converge.")
-                    raise ValueError
+                if counter > NumericalMethods.MAX_ITERATIONS:
+                    raise StopIteration
                 else:
                     counter = counter + 1
                 # calculates the state transition matrix
@@ -140,14 +139,6 @@ class NumericalMethods:
                 outTime = tau
             # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
-            # prints status updates
-            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
-                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
-            print(
-                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
-                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
-
-            return outData
 
         # differential corrections method with fixed z-amplitude
         elif fixedValue == "z":
@@ -162,9 +153,8 @@ class NumericalMethods:
             outTime = tau
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                if counter > 10:
-                    print("        Differential Corrections Method did not converge.")
-                    raise ValueError
+                if counter > NumericalMethods.MAX_ITERATIONS:
+                    raise StopIteration
                 else:
                     counter = counter + 1
                 # calculates the state transition matrix
@@ -182,7 +172,10 @@ class NumericalMethods:
                 D = np.array([[phi[1, 0], phi[1, 4], xdot[1]],
                               [phi[3, 0], phi[3, 4], xdot[3]],
                               [phi[5, 0], phi[5, 4], xdot[5]]])
-                DF = np.linalg.inv(D)
+                try:
+                    DF = np.linalg.inv(D)
+                except np.linalg.linalg.LinAlgError:
+                    raise np.linalg.linalg.LinAlgError
                 xIter = freeVariables - DF.dot(constraints)
                 # sets the updated initial condition vector
                 x = np.array([xIter[0], 0, x[2], 0, xIter[1], 0])
@@ -192,15 +185,6 @@ class NumericalMethods:
                 outTime = tau
             # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
-            # prints status updates
-            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
-                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
-            print(
-                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
-                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
-
-            return outData
-
 
         # differential corrections method with fixed dy/dt
         elif fixedValue == "dy/dt":
@@ -215,9 +199,8 @@ class NumericalMethods:
             outTime = tau
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                if counter > 10:
-                    print("        Differential Corrections Method did not converge.")
-                    raise ValueError
+                if counter > NumericalMethods.MAX_ITERATIONS:
+                    raise StopIteration
                 else:
                     counter = counter + 1
                 # calculates the state transition matrix
@@ -245,14 +228,6 @@ class NumericalMethods:
                 outTime = tau
             # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
-            # prints status updates
-            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
-                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
-            print(
-                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
-                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
-
-            return outData
 
         # differential corrections method with fixed period
         elif fixedValue == "Period":
@@ -267,9 +242,8 @@ class NumericalMethods:
             outTime = tau
             # constraints are corrected until they meet a defined margin of error
             while abs(constraints[0]) > epsilon or abs(constraints[1]) > epsilon:
-                if counter > 10:
-                    print("        Differential Corrections Method did not converge.")
-                    raise ValueError
+                if counter > NumericalMethods.MAX_ITERATIONS:
+                    raise StopIteration
                 else:
                     counter = counter + 1
                 # calculates the state transition matrix
@@ -292,14 +266,21 @@ class NumericalMethods:
                 outX = x
             # stores the initial state and period in output vector
             outData = np.array([outX[0], outX[1], outX[2], outX[3], outX[4], outX[5], 2 * outTime])
-            # prints status updates
-            print("        Initial state has been adapted for %d times:       -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]"
-                  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
-            print(
-                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n"
-                % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
 
-            return outData
+        if statusBar != None:
+            # prints status updates
+            statusBar.insert(tk.INSERT, "          Initial state has been adapted for %d times:\n"
+                                        "          -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]\n"  % (counter, outData[0], outData[1], outData[2], outData[3], outData[4], outData[5]))
+            statusBar.insert(tk.INSERT, "          Constraints at T/2 = %6.5f:\n"
+                                        "          -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n" % (1 / 2 * outData[6], constraints[0], constraints[1], constraints[2]))
+            statusBar.see(tk.END)
+
+        return outData
+
+
+    @classmethod
+    def setMaxIterations(cls, maxIterations):
+        cls.MAX_ITERATIONS = maxIterations
 
 
 class Utility:
@@ -515,7 +496,7 @@ class Utility:
                 while x[1] > 0:
                     if timeStep > 2:
                         print("        Half Period could not be calculated.")
-                        raise ValueError
+                        raise OverflowError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
                     t = np.linspace(0, timeStep, num=10000)
@@ -526,7 +507,7 @@ class Utility:
                 while x[1] < 0:
                     if timeStep > 2:
                         print("        Half Period could not be calculated.")
-                        raise ValueError
+                        raise OverflowError
                     xHalfPeriod = x
                     timeStep = timeStep + stepSize
                     t = np.linspace(0, timeStep, num=10000)
@@ -852,7 +833,7 @@ class Plot:
                 color = 'blue'
             else:
                 color = 'red'
-            plt.scatter(element[2] * system.distance,
+            plt.scatter(-element[4] * system.distance,
                         (element[1] * np.sqrt(distance ** 3 / (G * (massFP + massSP)))) / (60 * 60 * 24), s=0.5,
                         color=color)
         if save:
