@@ -59,7 +59,7 @@ class NumericalMethods:
             # declares and initializes constraint vector
             constraints = np.ones((3, 1))
             # declares and initializes counter for counting updates of initial state
-            counter = 1
+            counter = 0
             # constraints are corrected until they meet a defined margin of error
             while max(abs(constraints)) > epsilon:
                 if counter > NumericalMethods.MAX_ITERATIONS:
@@ -129,7 +129,10 @@ class NumericalMethods:
                 D = np.array([[phi[1, 2], phi[1, 4], xdot[1]],
                               [phi[3, 2], phi[3, 4], xdot[3]],
                               [phi[5, 2], phi[5, 4], xdot[5]]])
-                DF = np.linalg.inv(D)
+                try:
+                    DF = np.linalg.inv(D)
+                except np.linalg.linalg.LinAlgError:
+                    raise np.linalg.linalg.LinAlgError
                 xIter = freeVariables - DF.dot(constraints)
                 # sets the updated initial condition vector
                 x = np.array([x[0], 0, xIter[0], 0, xIter[1], 0])
@@ -218,7 +221,10 @@ class NumericalMethods:
                 D = np.array([[phi[1, 0], phi[1, 2], xdot[1]],
                               [phi[3, 0], phi[3, 2], xdot[3]],
                               [phi[5, 0], phi[5, 2], xdot[5]]])
-                DF = np.linalg.inv(D)
+                try:
+                    DF = np.linalg.inv(D)
+                except np.linalg.linalg.LinAlgError:
+                    raise np.linalg.linalg.LinAlgError
                 xIter = freeVariables - DF.dot(constraints)
                 # sets the updated initial condition vector
                 x = np.array([xIter[0], 0, xIter[1], 0, x[4], 0])
@@ -259,7 +265,10 @@ class NumericalMethods:
                 D = np.array([[phi[1, 0], phi[1, 2], phi[1, 4]],
                               [phi[3, 0], phi[3, 2], phi[3, 4]],
                               [phi[5, 0], phi[5, 2], phi[5, 4]]])
-                DF = np.linalg.inv(D)
+                try:
+                    DF = np.linalg.inv(D)
+                except np.linalg.linalg.LinAlgError:
+                    raise np.linalg.linalg.LinAlgError
                 xIter = freeVariables - DF.dot(constraints)
                 # sets the updated initial condition vector
                 x = np.array([xIter[0], 0, xIter[1], 0, xIter[2], 0])

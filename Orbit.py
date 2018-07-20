@@ -1,49 +1,55 @@
 """
 File    : Orbit.py
 Author  : Victor Hertel
-Date    : 28.05.2018
+Date    : 20.07.2018
 
 Includes the Orbit Class
 """
+
 
 
 # Imports
 import numpy as np
 from scipy import misc
 from scipy.integrate import odeint
-import time
 import tkinter as tk
 from Utility import NumericalMethods, Utility
 
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Orbit class
+# ----------------------------------------------------------------------------------------------------------------------
 class Orbit:
     # accuracy of differential corrections method
     ACCURACY = 1.0e-8
     # criteria for NRHOs
     STABILITY_CRITERIA = 5
-    # path to the output folder
-    dict = "Output/" + time.strftime("%Y-%m-%dT%H.%M.%S") + "/"
-
-    # initializes by adapting input state to initial state of periodic halo orbits and setting attributes
-    def __init__(self, x0, fixedValue, system, statusBar, tau=None):
+    # ------------------------------------------------------------------------------------------------------------------
+    # Initializes by adapting input state to initial state of periodic halo orbits and setting attributes.
+    # ------------------------------------------------------------------------------------------------------------------
+    def __init__(self, x0, fixedValue, system, tau=None, statusBar=None):
         # dynamical system
         self.system = system
         # stability index
         self.stability = None
         # bool if NRHO or not
         self.NRHO = None
-        # prints status updated
-        statusBar.insert(tk.INSERT, "   Adapting input state to periodic Halo Orbit...\n")
-        statusBar.see(tk.END)
-
+        if statusBar is not None:
+            # prints status updated
+            statusBar.insert(tk.INSERT, "   Adapting input state to periodic Halo Orbit...\n")
+            statusBar.see(tk.END)
         # stores initial state, period and constraints of halo orbit in 1x8 vector outData
         try:
             outData = NumericalMethods.diffCorrections(x0, self.system.mu, Orbit.ACCURACY, fixedValue, tau=tau, statusBar=statusBar)
         except OverflowError:
+            print("Overflow")
             raise OverflowError
         except StopIteration:
+            print("StopIteration")
             raise StopIteration
         except np.linalg.linalg.LinAlgError:
+            print("Linalg")
             raise np.linalg.linalg.LinAlgError
         else:
             # initial state
@@ -53,8 +59,7 @@ class Orbit:
             # calculates and sets jacobi constant
             Orbit.getJacobi(self)
             # sets data for plot
-            self.data = np.array(
-                [self.jacobi, self.period, self.x0[0], self.x0[1], self.x0[2], self.x0[3], self.x0[4], self.x0[5]])
+            self.data = np.array([self.jacobi, self.period, self.x0[0], self.x0[1], self.x0[2], self.x0[3], self.x0[4], self.x0[5]])
             # checks for lagrangian
             if self.x0[0] < 1:
                 self.lagrangian = "L1"
@@ -62,13 +67,14 @@ class Orbit:
                 self.lagrangian = "L2"
             self.unstableManifolds = None
             self.stableManifolds = None
+        if statusBar is not None:
             # prints status updated
-        statusBar.insert(tk.INSERT, "      Done\n>>>")
-        statusBar.see(tk.END)
-
-    # searches for closest NRHO by using the pseudo-arclength continuation method
+            statusBar.insert(tk.INSERT, "      Done\n>>>")
+            statusBar.see(tk.END)
+    # ------------------------------------------------------------------------------------------------------------------
+    # Searches for closest NRHO by using the pseudo-arclength continuation method.
+    # ------------------------------------------------------------------------------------------------------------------
     def getClosestNRHO(self, direction=None):
-        # method is canceled when error occured
         # calculates highest stability index when attribute not given
         if self.stability is None:
             Orbit.getStability(self)
@@ -99,8 +105,7 @@ class Orbit:
                 # declares and initializes the augmented free variable vector
                 contiFreeVariables = np.array([x_n[0], x_n[2], x_n[4], tau_n])
                 # declares and initializes the augmented constraints vector
-                contiConstraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5],
-                                             (contiFreeVariables - freeVariables).T.dot(nullSpace) + stepSize])
+                contiConstraints = np.array([xRef[-1, 1], xRef[-1, 3], xRef[-1, 5], (contiFreeVariables - freeVariables).T.dot(nullSpace) + stepSize])
                 # calculates corrections to the initial state to meet a defined margin of error
                 GF = np.array([[phi[1, 0], phi[1, 2], phi[1, 4], xdot[1]],
                                [phi[3, 0], phi[3, 2], phi[3, 4], xdot[3]],
@@ -121,15 +126,14 @@ class Orbit:
                 print("        Stability index: %8.4f" % self.stability)
             self.stableManifolds = None
             self.unstableManifolds = None
-            print(
-                "\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
+            print("\n        Initial state:                                    -> x0 = [%0.8f, %d, %8.8f, %d, %8.8f, %d]" % (
                     x_n[0], x_n[1], x_n[2], x_n[3], x_n[4], x_n[5]))
-            print(
-                "        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n" % (
+            print("        Constraints at T/2 = %6.5f:                     -> [y, dx/dt, dz/dt] = [%6.5e, %6.5e, %6.5e]\n" % (
                     tau_n, contiConstraints[0], contiConstraints[1], contiConstraints[2]))
         print("DONE")
-
-    # calculates jacobi constant of orbit and sets result as attribute
+    # ------------------------------------------------------------------------------------------------------------------
+    # Calculates jacobi constant of orbit and sets result as attribute.
+    # ------------------------------------------------------------------------------------------------------------------
     def getJacobi(self):
         # method is canceled when error occured
         r1 = np.sqrt((self.x0[0] + self.system.mu) ** 2 + self.x0[1] ** 2 + self.x0[2] ** 2)
@@ -137,10 +141,10 @@ class Orbit:
         self.jacobi = -1 / 2 * (self.x0[3] ** 2 + self.x0[4] ** 2 + self.x0[5] ** 2) + 2 * (
                 1 / 2 * (self.x0[0] ** 2 + self.x0[1] ** 2)
                 + (1 - self.system.mu) / r1 + self.system.mu / r2)
-
-    # calculates highest stability index of orbit and sets result as attribute
+    # ------------------------------------------------------------------------------------------------------------------
+    # Calculates highest stability index of orbit and sets result as attribute.
+    # ------------------------------------------------------------------------------------------------------------------
     def getStability(self):
-
         # calculates monodromy matrix
         monodromy = Utility.stm(self.x0, self.period, self.system.mu)
         # calculates eigenvalues of monodromy matrix
@@ -153,8 +157,9 @@ class Orbit:
             self.NRHO = True
         else:
             self.NRHO = False
-
-    # calculates invariant stable and unstable manifolds
+    # ------------------------------------------------------------------------------------------------------------------
+    # Calculates invariant stable and unstable manifolds.
+    # ------------------------------------------------------------------------------------------------------------------
     def invariantManifolds(self, numberOfPoints, direction):
         # perturbation of state in stable/unstable eigenvector direction
         epsilon = 0.00013007216403660752
@@ -214,6 +219,8 @@ class Orbit:
             if self.lagrangian == "L2" and unstableEigenvector[0] > 0:
                 unstableEigenvector = -unstableEigenvector
         # perturbates states of orbit in direction of stable/unstable eigenvector
+        stableEigenvector = stableEigenvector/np.sqrt(stableEigenvector[0] ** 2 + stableEigenvector[1] ** 2 + stableEigenvector[2] ** 2)
+        unstableEigenvector = unstableEigenvector/np.sqrt(unstableEigenvector[0] ** 2 + unstableEigenvector[1] ** 2 + unstableEigenvector[2] ** 2)
         stableManifoldStates[0, :] = self.x0 + epsilon * stableEigenvector
         unstableManifoldStates[0, :] = self.x0 + epsilon * unstableEigenvector
         # perturbates the other points of orbit
@@ -233,23 +240,30 @@ class Orbit:
         # sets attributes of orbit
         self.stableManifolds = stableManifoldStates
         self.unstableManifolds = unstableManifoldStates
-
-
+    # ------------------------------------------------------------------------------------------------------------------
+    # Sets class variable ACCURACY.
+    # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     def setAccuracy(cls, accuracy):
         cls.ACCURACY = accuracy
+    # ------------------------------------------------------------------------------------------------------------------
+    # Sets class variable STABILITY_CRITERIA.
+    # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     def setStabilityCriteria(cls, stabilityCriteria):
         cls.STABILITY_CRITERIA = stabilityCriteria
 
 
 
-
+# ----------------------------------------------------------------------------------------------------------------------
+# This OrbitFamily main page contains all functionalities for orbit families.
+# ----------------------------------------------------------------------------------------------------------------------
 class InitialGuess:
-
+    # ------------------------------------------------------------------------------------------------------------------
+    # Calculates the initial guess.
+    # ------------------------------------------------------------------------------------------------------------------
     def __init__(self, dynamicalSystem, lagrangian, family, fixedValue, value):
         np.seterr(all='raise')
-
         try:
             # BERECHNUNGEN LAGRANGE POSITION
             l = 1-dynamicalSystem.mu

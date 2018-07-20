@@ -2,6 +2,7 @@ CREATION_DATE            =      2018-05-27T21:56:05
 ORIGINATOR               =      ASTOS SOLUTIONS GMBH
 
 META_START
+TYPE			 =	FAMILY
 NAME FIRST PRIMARY       =      Earth
 MASS FIRST PRIMARY       =      5.972370e+24
 NAME SECOND PRIMARY      =      Moon
