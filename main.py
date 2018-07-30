@@ -9,5 +9,5 @@ Computation of halo orbits
 # Imports
 from GUI import HaloTool
 
-app = HaloTool()
+app = HaloTool.HaloTool()
 app.mainloop()
