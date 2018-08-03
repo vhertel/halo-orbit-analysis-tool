@@ -110,8 +110,7 @@ class OrbitPage(Frame):
         # second primary
         Label(systemAttributes, text="Second Primary:").grid(row=2, column=0, padx=5, sticky='W')
         Label(systemAttributes, text=dynamicalSystem.nameSP).grid(row=2, column=1, padx=5, sticky='E')
-        Label(systemAttributes, text="Mass of " + dynamicalSystem.nameSP + ":").grid(row=3, column=0, padx=5,
-                                                                                     sticky='W')
+        Label(systemAttributes, text="Mass of " + dynamicalSystem.nameSP + ":").grid(row=3, column=0, padx=5, sticky='W')
         Label(systemAttributes, text="%e kg" % (dynamicalSystem.massSP)).grid(row=3, column=1, padx=5, sticky='E')
         # distance between primaries
         Label(systemAttributes, text="Distance:").grid(row=4, column=0, padx=5, sticky='W')
@@ -120,23 +119,25 @@ class OrbitPage(Frame):
         plotOptions = LabelFrame(frameRight, text=" PLOT CONFIGURATION ")
         plotOptions.pack(fill=BOTH, expand=True, pady=(0, 7))
         Label(plotOptions, text="Manifold Direction:").grid(row=2, column=0, columnspan=4, padx=5, sticky='W')
-        self.manifoldDirection = IntVar(value=0)
-        self.manifoldDirectionRBFP = Radiobutton(plotOptions, text=dynamicalSystem.nameFP, variable=self.manifoldDirection, value=0, state=DISABLED)
-        self.manifoldDirectionRBFP.grid(row=2, column=4, padx=5, pady=2)
-        self.manifoldDirectionRBSP = Radiobutton(plotOptions, text=dynamicalSystem.nameSP, variable=self.manifoldDirection, value=1, state=DISABLED)
-        self.manifoldDirectionRBSP.grid(row=2, column=5, padx=5, pady=2)
-        Label(plotOptions, text="Number of Manifolds:").grid(row=3, column=0, columnspan=3, padx=5, sticky='W')
+        Label(plotOptions, text=dynamicalSystem.nameFP).grid(row=2, column=4, padx=5, pady=2)
+        Label(plotOptions, text=dynamicalSystem.nameSP).grid(row=2, column=5, padx=5, pady=2)
+        Label(plotOptions, text="Duration Factor:").grid(row=3, column=0, columnspan=3, padx=5, sticky='W')
+        self.durationFactorEntryFP = Entry(plotOptions, width=5, justify=CENTER)
+        self.durationFactorEntryFP.grid(row=3, column=2, columnspan=3, padx=5, sticky='E')
+        self.durationFactorEntrySP = Entry(plotOptions, width=5, justify=CENTER)
+        self.durationFactorEntrySP.grid(row=3, column=3, columnspan=3, padx=5, sticky='E')
+        self.defaultDurationFactorFP = 1.2
+        self.defaultDurationFactorSP = 0.8
+        self.durationFactorEntryFP.insert(END, self.defaultDurationFactorFP)
+        self.durationFactorEntryFP.config(state=DISABLED)
+        self.durationFactorEntrySP.insert(END, self.defaultDurationFactorSP)
+        self.durationFactorEntrySP.config(state=DISABLED)
+        Label(plotOptions, text="Number of Manifolds:").grid(row=4, column=0, columnspan=3, padx=5, sticky='W')
         self.numberOfManifoldEntry = Entry(plotOptions, width=5, justify=CENTER)
-        self.numberOfManifoldEntry.grid(row=3, column=3, columnspan=3, padx=5, sticky='E')
+        self.numberOfManifoldEntry.grid(row=4, column=3, columnspan=3, padx=5, sticky='E')
         self.defaultNumberOfManifolds = 30
         self.numberOfManifoldEntry.insert(END, self.defaultNumberOfManifolds)
         self.numberOfManifoldEntry.config(state=DISABLED)
-        Label(plotOptions, text="Duration Factor:").grid(row=4, column=0, columnspan=3, padx=5, sticky='W')
-        self.durationFactorEntry = Entry(plotOptions, width=5, justify=CENTER)
-        self.durationFactorEntry.grid(row=4, column=3, columnspan=3, padx=5, sticky='E')
-        self.defaultDurationFactor = 1.2
-        self.durationFactorEntry.insert(END, self.defaultDurationFactor)
-        self.durationFactorEntry.config(state=DISABLED)
         Label(plotOptions, text="Invariant Manifolds:").grid(row=0, column=0, columnspan=4, padx=5, sticky='W')
         self.stable = IntVar(value=0)
         self.unstable = IntVar(value=0)
@@ -186,17 +187,16 @@ class OrbitPage(Frame):
     # ------------------------------------------------------------------------------------------------------------------
     def activateManifolds(self):
         self.numberOfManifoldEntry.config(highlightbackground='white')
-        self.durationFactorEntry.config(highlightbackground='white')
+        self.durationFactorEntryFP.config(highlightbackground='white')
+        self.durationFactorEntrySP.config(highlightbackground='white')
         if self.stable.get() or self.unstable.get():
-            self.manifoldDirectionRBFP.config(state=NORMAL)
-            self.manifoldDirectionRBSP.config(state=NORMAL)
             self.numberOfManifoldEntry.config(state=NORMAL)
-            self.durationFactorEntry.config(state=NORMAL)
+            self.durationFactorEntryFP.config(state=NORMAL)
+            self.durationFactorEntrySP.config(state=NORMAL)
         else:
-            self.manifoldDirectionRBFP.config(state=DISABLED)
-            self.manifoldDirectionRBSP.config(state=DISABLED)
             self.numberOfManifoldEntry.config(state=DISABLED)
-            self.durationFactorEntry.config(state=DISABLED)
+            self.durationFactorEntryFP.config(state=DISABLED)
+            self.durationFactorEntrySP.config(state=DISABLED)
     # ------------------------------------------------------------------------------------------------------------------
     # This method calls a window for specifying the data to be saved.
     # ------------------------------------------------------------------------------------------------------------------
@@ -334,7 +334,8 @@ class OrbitPage(Frame):
                 # stores input number of manifolds
                 numberOfManifolds = int(self.numberOfManifoldEntry.get())
                 # stores factor of integration
-                durationFactor = float(self.durationFactorEntry.get())
+                durationFactorFP = float(self.durationFactorEntryFP.get())
+                durationFactorSP = float(self.durationFactorEntrySP.get())
             except ValueError:
                 self.status.config(text="Missing Input in Manifold Options")
                 self.status.update()
@@ -342,48 +343,73 @@ class OrbitPage(Frame):
                 self.unstable.set(0)
                 if self.numberOfManifoldEntry.get() == "":
                     self.numberOfManifoldEntry.config(highlightbackground='red')
-                if self.durationFactorEntry.get() == "":
-                    self.durationFactorEntry.config(highlightbackground='red')
-                self.manifoldDirectionRBFP.config(state=DISABLED)
-                self.manifoldDirectionRBSP.config(state=DISABLED)
+                if self.durationFactorEntryFP.get() == "":
+                    self.durationFactorEntryFP.config(highlightbackground='red')
+                if self.durationFactorEntrySP.get() == "":
+                    self.durationFactorEntrySP.config(highlightbackground='red')
                 self.numberOfManifoldEntry.config(state=DISABLED)
-                self.durationFactorEntry.config(state=DISABLED)
+                self.durationFactorEntryFP.config(state=DISABLED)
+                self.durationFactorEntrySP.config(state=DISABLED)
             else:
                 # checks whether input of manifold direction, number or duration factor has been changed
-                if self.defaultNumberOfManifolds == int(self.numberOfManifoldEntry.get()) and self.defaultDurationFactor == float(self.durationFactorEntry.get()):
+                if self.defaultNumberOfManifolds == int(self.numberOfManifoldEntry.get()) and self.defaultDurationFactorFP == float(self.durationFactorEntryFP.get()) and self.defaultDurationFactorSP == float(self.durationFactorEntrySP.get()):
                     inputChange = False
                 else:
                     inputChange = True
                 # updates manifold number and duration factor
                 self.defaultNumberOfManifolds = numberOfManifolds
-                self.defaultDurationFactor = durationFactor
+                self.defaultDurationFactorFP = durationFactorFP
+                self.defaultDurationFactorSP = durationFactorSP
                 # checks if manifolds need to be recalculated
-                if ((self.stable.get() or self.unstable.get()) and orbit.stableManifolds is None) or (
-                        (self.stable.get() or self.unstable.get()) and inputChange):
+                if ((self.stable.get() or self.unstable.get()) and orbit.stableManifolds is None) or ((self.stable.get() or self.unstable.get()) and inputChange):
                     self.status.config(text="Calculating invariant Manifolds ...")
                     self.status.update()
+
+
                     # calculates initial states of (un)stable manifolds
-                    orbit.invariantManifolds(numberOfPoints=numberOfManifolds, direction=self.manifoldDirection.get())
+                    orbit.invariantManifolds(numberOfPoints=numberOfManifolds, direction=0)
                     # declares arrays
-                    self.xStableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
-                    self.yStableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
-                    self.zStableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
-                    self.xUnstableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
-                    self.yUnstableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
-                    self.zUnstableManifold = np.zeros((numberOfManifolds, int(durationFactor*50)))
+                    self.xStableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
+                    self.yStableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
+                    self.zStableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
+                    self.xUnstableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
+                    self.yUnstableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
+                    self.zUnstableManifoldFP = np.zeros((numberOfManifolds, int(durationFactorFP*50)))
                     # integrates all states of (un)stable manifolds and stores data
-                    t = np.linspace(0, durationFactor * orbit.period, num=int(durationFactor*50))
+                    t = np.linspace(0, durationFactorFP * orbit.period, num=int(durationFactorFP*50))
                     for i in range(0, numberOfManifolds):
-                        stableManifold = odeint(Utility.backwards, orbit.stableManifolds[i], t, args=(dynamicalSystem.mu,),
-                                                rtol=2.5e-13, atol=1e-22)
-                        self.xStableManifold[i, :] = stableManifold[:, 0] * dynamicalSystem.distance
-                        self.yStableManifold[i, :] = stableManifold[:, 1] * dynamicalSystem.distance
-                        self.zStableManifold[i, :] = stableManifold[:, 2] * dynamicalSystem.distance
-                        unstableManifold = odeint(Utility.sysEquations, orbit.unstableManifolds[i], t,
-                                                  args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
-                        self.xUnstableManifold[i, :] = unstableManifold[:, 0] * dynamicalSystem.distance
-                        self.yUnstableManifold[i, :] = unstableManifold[:, 1] * dynamicalSystem.distance
-                        self.zUnstableManifold[i, :] = unstableManifold[:, 2] * dynamicalSystem.distance
+                        stableManifold = odeint(Utility.backwards, orbit.stableManifolds[i], t, args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
+                        self.xStableManifoldFP[i, :] = stableManifold[:, 0] * dynamicalSystem.distance
+                        self.yStableManifoldFP[i, :] = stableManifold[:, 1] * dynamicalSystem.distance
+                        self.zStableManifoldFP[i, :] = stableManifold[:, 2] * dynamicalSystem.distance
+                        unstableManifold = odeint(Utility.sysEquations, orbit.unstableManifolds[i], t, args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
+                        self.xUnstableManifoldFP[i, :] = unstableManifold[:, 0] * dynamicalSystem.distance
+                        self.yUnstableManifoldFP[i, :] = unstableManifold[:, 1] * dynamicalSystem.distance
+                        self.zUnstableManifoldFP[i, :] = unstableManifold[:, 2] * dynamicalSystem.distance
+
+                    orbit.invariantManifolds(numberOfPoints=numberOfManifolds, direction=1)
+                    # declares arrays
+                    self.xStableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    self.yStableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    self.zStableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    self.xUnstableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    self.yUnstableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    self.zUnstableManifoldSP = np.zeros((numberOfManifolds, int(durationFactorSP*50)))
+                    # integrates all states of (un)stable manifolds and stores data
+                    t = np.linspace(0, durationFactorSP * orbit.period, num=int(durationFactorSP*50))
+                    for i in range(0, numberOfManifolds):
+                        stableManifold = odeint(Utility.backwards, orbit.stableManifolds[i], t, args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
+                        self.xStableManifoldSP[i, :] = stableManifold[:, 0] * dynamicalSystem.distance
+                        self.yStableManifoldSP[i, :] = stableManifold[:, 1] * dynamicalSystem.distance
+                        self.zStableManifoldSP[i, :] = stableManifold[:, 2] * dynamicalSystem.distance
+                        unstableManifold = odeint(Utility.sysEquations, orbit.unstableManifolds[i], t, args=(dynamicalSystem.mu,), rtol=2.5e-13, atol=1e-22)
+                        self.xUnstableManifoldSP[i, :] = unstableManifold[:, 0] * dynamicalSystem.distance
+                        self.yUnstableManifoldSP[i, :] = unstableManifold[:, 1] * dynamicalSystem.distance
+                        self.zUnstableManifoldSP[i, :] = unstableManifold[:, 2] * dynamicalSystem.distance
+
+
+
+
                     self.status.config(text="")
                     self.status.update()
 
@@ -411,10 +437,12 @@ class OrbitPage(Frame):
         plt.tick_params(axis='both', which='both', labelsize=7, direction='out')
         if self.stable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.xStableManifold[i, :], self.zStableManifold[i, :], color='green', linewidth=0.5)
+                plt.plot(self.xStableManifoldFP[i, :], self.zStableManifoldFP[i, :], color='green', linewidth=0.5)
+                plt.plot(self.xStableManifoldSP[i, :], self.zStableManifoldSP[i, :], color='green', linewidth=0.5)
         if self.unstable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.xUnstableManifold[i, :], self.zUnstableManifold[i, :], color='red', linewidth=0.5)
+                plt.plot(self.xUnstableManifoldFP[i, :], self.zUnstableManifoldFP[i, :], color='red', linewidth=0.5)
+                plt.plot(self.xUnstableManifoldSP[i, :], self.zUnstableManifoldSP[i, :], color='red', linewidth=0.5)
         plt.plot(self.xOrbit, self.zOrbit, color='black', linewidth=0.75)
         if self.nameFP.get():
             plt.scatter((-dynamicalSystem.mu) * dynamicalSystem.distance, 0, color='grey', s=3)
@@ -436,10 +464,12 @@ class OrbitPage(Frame):
         plt.tick_params(axis='both', which='both', labelsize=7, direction='out')
         if self.stable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.yStableManifold[i, :], self.zStableManifold[i, :], color='green', linewidth=0.5)
+                plt.plot(self.yStableManifoldFP[i, :], self.zStableManifoldFP[i, :], color='green', linewidth=0.5)
+                plt.plot(self.yStableManifoldSP[i, :], self.zStableManifoldSP[i, :], color='green', linewidth=0.5)
         if self.unstable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.yUnstableManifold[i, :], self.zUnstableManifold[i, :], color='red', linewidth=0.5)
+                plt.plot(self.yUnstableManifoldFP[i, :], self.zUnstableManifoldFP[i, :], color='red', linewidth=0.5)
+                plt.plot(self.yUnstableManifoldSP[i, :], self.zUnstableManifoldSP[i, :], color='red', linewidth=0.5)
         plt.plot(self.yOrbit, self.zOrbit, color='black', linewidth=0.75)
         if self.nameFP.get():
             plt.scatter(0, 0, color='grey', s=3)
@@ -461,10 +491,12 @@ class OrbitPage(Frame):
         plt.tick_params(axis='both', which='both', labelsize=7, direction='out')
         if self.stable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.xStableManifold[i, :], self.yStableManifold[i, :], color='green', linewidth=0.5)
+                plt.plot(self.xStableManifoldFP[i, :], self.yStableManifoldFP[i, :], color='green', linewidth=0.5)
+                plt.plot(self.xStableManifoldSP[i, :], self.yStableManifoldSP[i, :], color='green', linewidth=0.5)
         if self.unstable.get():
             for i in range(numberOfManifolds):
-                plt.plot(self.xUnstableManifold[i, :], self.yUnstableManifold[i, :], color='red', linewidth=0.5)
+                plt.plot(self.xUnstableManifoldFP[i, :], self.yUnstableManifoldFP[i, :], color='red', linewidth=0.5)
+                plt.plot(self.xUnstableManifoldSP[i, :], self.yUnstableManifoldSP[i, :], color='red', linewidth=0.5)
         plt.plot(self.xOrbit, self.yOrbit, color='black', linewidth=0.75)
         if self.nameFP.get():
             plt.scatter((-dynamicalSystem.mu) * dynamicalSystem.distance, 0, color='grey', s=3)
@@ -485,12 +517,12 @@ class OrbitPage(Frame):
         ax.set_zlabel('[m]', fontsize=8)
         if self.stable.get():
             for i in range(numberOfManifolds):
-                ax.plot(self.xStableManifold[i, :], self.yStableManifold[i, :], self.zStableManifold[i, :],
-                        color='green', linewidth=0.5)
+                ax.plot(self.xStableManifoldFP[i, :], self.yStableManifoldFP[i, :], self.zStableManifoldFP[i, :], color='green', linewidth=0.5)
+                ax.plot(self.xStableManifoldSP[i, :], self.yStableManifoldSP[i, :], self.zStableManifoldSP[i, :], color='green', linewidth=0.5)
         if self.unstable.get():
             for i in range(numberOfManifolds):
-                ax.plot(self.xUnstableManifold[i, :], self.yUnstableManifold[i, :], self.zUnstableManifold[i, :],
-                        color='red', linewidth=0.5)
+                ax.plot(self.xUnstableManifoldFP[i, :], self.yUnstableManifoldFP[i, :], self.zUnstableManifoldFP[i, :], color='red', linewidth=0.5)
+                ax.plot(self.xUnstableManifoldSP[i, :], self.yUnstableManifoldSP[i, :], self.zUnstableManifoldSP[i, :], color='red', linewidth=0.5)
         ax.plot(self.xOrbit, self.yOrbit, self.zOrbit, color='black', linewidth=0.75)
         if self.nameFP.get():
             ax.scatter((-dynamicalSystem.mu) * dynamicalSystem.distance, 0, 0, color='grey', s=3)
